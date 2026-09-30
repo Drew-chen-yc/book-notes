@@ -172,9 +172,9 @@
     }, 1000);
 
     function onScroll() {
+      // 已進入畫面的文章比例 = (視窗底部 - 文章頂端) ÷ 文章高度
       var rect = el.getBoundingClientRect();
-      var total = el.offsetHeight - window.innerHeight;
-      var seen = total <= 0 ? 100 : Math.min(100, Math.max(0, (-rect.top / total) * 100));
+      var seen = rect.height <= 0 ? 0 : Math.min(100, Math.max(0, ((window.innerHeight - rect.top) / rect.height) * 100));
       marks.forEach(function (m) {
         if (seen >= m && !fired[m]) {
           fired[m] = true;
