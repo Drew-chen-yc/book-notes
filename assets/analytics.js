@@ -7,7 +7,7 @@
   'use strict';
 
   // ★ 取得 GTM 容器 ID 後替換這一行即可（維持佔位符時不會載入 GTM，但 dataLayer 照常運作）
-  var GTM_ID = 'GTM-XXXXXXX';
+  var GTM_ID = 'GTM-M72B3VB3';
 
   var CONSENT_KEY = 'bn_consent';        // 'all' | 'necessary'
   var PROFILE_KEY = 'bn_profile';        // 讀者行為輪廓（僅存在瀏覽器）
@@ -19,11 +19,11 @@
   function gtag() { window.dataLayer.push(arguments); }
   window.gtag = gtag;
 
-  /* ---------- 1. Consent Mode v2：預設拒絕，使用者同意後才開啟 ---------- */
+  /* ---------- 1. Consent Mode v2：分析預設開啟、廣告預設拒絕；按「全部接受」才開啟廣告 ---------- */
   var GRANTED = { ad_storage: 'granted', ad_user_data: 'granted', ad_personalization: 'granted', analytics_storage: 'granted' };
   gtag('consent', 'default', {
     ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
-    analytics_storage: 'denied', wait_for_update: 500
+    analytics_storage: 'granted', wait_for_update: 500
   });
   var consent = safeGet(CONSENT_KEY);
   if (consent === 'all') gtag('consent', 'update', GRANTED);
@@ -123,7 +123,7 @@
     d.setAttribute('role', 'dialog');
     d.setAttribute('aria-label', 'Cookie 使用同意');
     d.innerHTML =
-      '<p>本站使用 Cookie 分析閱讀行為，並用於推薦內容與廣告成效衡量。詳見<a href="about.html#privacy">隱私說明</a>。</p>' +
+      '<p>本站使用分析 Cookie 了解哪些心得受歡迎；廣告相關 Cookie 需經您同意才會啟用。詳見<a href="about.html#privacy">隱私說明</a>。</p>' +
       '<div class="consent-actions">' +
       '<button type="button" class="btn btn-ghost" data-consent="necessary">僅必要</button>' +
       '<button type="button" class="btn" data-consent="all">全部接受</button></div>';
