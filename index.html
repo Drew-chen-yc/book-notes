@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-Hant-TW" data-page-type="home" data-content-group="首頁">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>書頁筆記｜讀書心得</title>
+  <meta name="description" content="一個人的讀書心得：自我成長、心理學、歷史與投資理財。">
+  <meta property="og:title" content="書頁筆記｜讀書心得">
+  <meta property="og:description" content="一個人的讀書心得：自我成長、心理學、歷史與投資理財。">
+  <meta property="og:type" content="website">
+  <!-- 追蹤程式必須最先載入：Consent 預設值 → dataLayer 脈絡 → GTM -->
+  <script src="assets/analytics.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="site-header"><div class="wrap">
+    <a class="logo" href="index.html">書頁筆記</a>
+    <nav><a href="index.html">心得</a><a href="about.html">關於</a></nav>
+  </div></header>
+  <main class="wrap">
+    <section class="hero">
+      <h1>讀完一本書，寫下一點想法</h1>
+      <p>自我成長、心理學、歷史與投資理財的讀書心得。不長，但都是真的讀完才寫。</p>
+      <label class="sr-only" for="search">搜尋心得</label>
+      <input id="search" type="search" placeholder="搜尋書名、作者或關鍵字…" autocomplete="off">
+      <div id="chips" class="chips" role="group" aria-label="分類篩選"></div>
+    </section>
+    <section aria-label="心得列表">
+      <div id="review-list" class="grid"></div>
+      <p id="empty" class="empty" hidden>沒有符合的心得，換個關鍵字試試。</p>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="wrap">
+    <form id="newsletter" novalidate>
+      <h2>每月一封新心得</h2>
+      <p>不寄廣告，只寄這個月讀完的書。</p>
+      <div class="form-row">
+        <label class="sr-only" for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+        <label class="sr-only" for="interest">感興趣的分類</label>
+        <select id="interest" name="interest">
+          <option value="all">全部分類</option><option value="自我成長">自我成長</option><option value="心理學">心理學</option><option value="歷史">歷史</option><option value="投資理財">投資理財</option>
+        </select>
+        <button class="btn" type="submit">訂閱</button>
+      </div>
+      <p class="form-msg" aria-live="polite"></p>
+    </form>
+    <p class="copyright">© 2026 書頁筆記 · <a href="about.html#privacy">隱私說明</a></p>
+  </div></footer>
+  <script src="data/reviews.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
