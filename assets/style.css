@@ -116,3 +116,6 @@ article p { margin: 1.1em 0; }
 h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; }
 .lead, article p { max-width: 38em; }
 @media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }
+
+.form-note { font-size: 13px; color: var(--muted); margin: 8px 0 0 !important; }
+#unsubscribe { margin-top: 12px; }

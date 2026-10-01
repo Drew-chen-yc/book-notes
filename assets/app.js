@@ -16,6 +16,10 @@
   function reviewParams(r) {
     return { review_id: r.id, book_title: r.title, book_author: r.author, book_category: r.category, rating: r.rating };
   }
+  /* 搜尋字若含 Email 或電話樣式，送進 GA 前先遮蔽（Google 政策禁止把個資送進 GA） */
+  function redactPII(t) {
+    return String(t).replace(/[^\s@]+@[^\s@]+\.[^\s@]+/g, '[redacted]').replace(/\+?\d[\d\s-]{7,}\d/g, '[redacted]');
+  }
   function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
@@ -97,7 +101,7 @@
         var term = input.value.trim();
         if (term.length >= 2 && term !== lastSent) {
           lastSent = term;
-          track('search', { search_term: term, results_count: n });
+          track('search', { search_term: redactPII(term), results_count: n });
         }
       }, 1000);
     });
@@ -190,12 +194,39 @@
     bindCardClicks(relBox);
   }
 
-  /* ================= 電子報表單（每頁頁尾） ================= */
+  /* ================= 電子報表單（每頁頁尾） =================
+   * 名單存進站長自己的 Google 表單（回應在 Google 表單／試算表），Email 絕不送進 GA。 */
+  var NEWSLETTER = {
+    url: 'https://docs.google.com/forms/d/e/1FAIpQLSeZIZwdwvDil4ZJNt87a8bcVeVZix9YbsOLa1wJ2yg1qv0HuQ/formResponse',
+    email: 'entry.1091954786', interest: 'entry.733728389', action: 'entry.618872592', source: 'entry.833493817'
+  };
+  function sendToForm(email, interest, action) {
+    var body = new URLSearchParams();
+    body.append(NEWSLETTER.email, email);
+    body.append(NEWSLETTER.interest, interest);
+    body.append(NEWSLETTER.action, action);
+    body.append(NEWSLETTER.source, page || 'other');
+    // Google 表單不回傳跨網域結果（no-cors），送得出去就視為成功；斷線才會進 catch
+    return fetch(NEWSLETTER.url, { method: 'POST', mode: 'no-cors', body: body });
+  }
+  function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) && v.length <= 254; }
+
   function initNewsletter() {
     var f = $('#newsletter');
     if (!f) return;
-    var started = false;
+    var started = false, sending = false;
     var loc = page || 'other';
+    var msg = f.querySelector('.form-msg');
+    // 蜜罐欄位：真人看不到，機器人會填 → 直接丟棄
+    var trap = document.createElement('input');
+    trap.type = 'text'; trap.name = 'website'; trap.tabIndex = -1; trap.autocomplete = 'off';
+    trap.setAttribute('aria-hidden', 'true'); trap.className = 'sr-only';
+    f.appendChild(trap);
+    var note = document.createElement('p');
+    note.className = 'form-note';
+    note.innerHTML = '按下訂閱即同意我們用這個 Email 寄送新心得通知，不作其他用途。可隨時<a href="about.html#unsubscribe">取消訂閱</a>，詳見<a href="about.html#privacy">隱私說明</a>。';
+    f.appendChild(note);
+
     f.addEventListener('focusin', function () {
       if (started) return;
       started = true;
@@ -203,16 +234,42 @@
     });
     f.addEventListener('submit', function (e) {
       e.preventDefault();
+      if (sending) return;
       var email = f.email.value.trim();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        f.querySelector('.form-msg').textContent = 'Email 格式不正確';
+      if (!validEmail(email)) {
+        msg.textContent = 'Email 格式不正確';
         track('newsletter_error', { form_location: loc, error_type: 'invalid_email' });
         return;
       }
+      if (trap.value) { f.innerHTML = '<p class="form-msg ok">訂閱成功！</p>'; return; }
       var interest = f.interest.value;
-      // ⚠ 絕不把 email 送進 GA（違反 Google 政策）。實際寄送請接 Formspree / Google 表單，見 README。
-      track('generate_lead', { form_location: loc, lead_type: 'newsletter', interest_category: interest });
-      f.innerHTML = '<p class="form-msg ok">訂閱成功！每月一封，只寄新心得。</p>';
+      var btn = f.querySelector('button[type=submit]');
+      sending = true; btn.disabled = true; msg.textContent = '送出中…';
+      sendToForm(email, interest, '訂閱').then(function () {
+        // ⚠ 只送「有人訂閱」這件事進 GA，不含 Email
+        track('generate_lead', { form_location: loc, lead_type: 'newsletter', interest_category: interest });
+        f.innerHTML = '<p class="form-msg ok">訂閱成功！有新心得時會寄信通知你。</p>';
+      }).catch(function () {
+        sending = false; btn.disabled = false;
+        msg.textContent = '送出失敗，請檢查網路後再試一次。';
+        track('newsletter_error', { form_location: loc, error_type: 'network' });
+      });
+    });
+  }
+
+  /* 取消訂閱（關於頁） */
+  function initUnsubscribe() {
+    var f = $('#unsubscribe');
+    if (!f) return;
+    var msg = f.querySelector('.form-msg');
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var email = f.email.value.trim();
+      if (!validEmail(email)) { msg.textContent = 'Email 格式不正確'; return; }
+      msg.textContent = '送出中…';
+      sendToForm(email, '', '取消訂閱').then(function () {
+        f.innerHTML = '<p class="form-msg ok">已收到取消訂閱的申請，我們會在 7 天內從名單移除並刪除這個 Email。</p>';
+      }).catch(function () { msg.textContent = '送出失敗，請檢查網路後再試一次。'; });
     });
   }
 
@@ -220,11 +277,13 @@
   function applyCatParam() {
     var cat = new URLSearchParams(location.search).get('cat');
     if (!cat) return;
-    var b = document.querySelector('.chip[data-cat="' + cat + '"]');
+    // 只接受既有分類，不把網址參數直接組進選擇器
+    var b = Array.prototype.filter.call(document.querySelectorAll('.chip'), function (c) { return c.dataset.cat === cat; })[0];
     if (b) { b.dataset.silent = '1'; b.click(); }
   }
 
   if (page === 'home') { initHome(); applyCatParam(); }
   if (page === 'review') initReview();
   initNewsletter();
+  initUnsubscribe();
 })();

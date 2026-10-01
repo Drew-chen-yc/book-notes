@@ -15,6 +15,16 @@
   function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
+  /* 站內搜尋參數 ?q= 若含 Email 或電話樣式，在送出任何資料前先從網址移除，避免個資進到 GA 的頁面網址 */
+  try {
+    var qs = new URLSearchParams(location.search), qv = qs.get('q');
+    if (qv && (/@/.test(qv) || /\d[\d\s-]{7,}\d/.test(qv))) {
+      qs.delete('q');
+      var rest = qs.toString();
+      history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
+    }
+  } catch (e) {}
+
   window.dataLayer = window.dataLayer || [];
   function gtag() { window.dataLayer.push(arguments); }
   window.gtag = gtag;
