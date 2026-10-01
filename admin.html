@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>心得後台｜書頁筆記</title>
+  <!-- 後台不載入 analytics.js：不追蹤自己的操作，也不讓第三方程式碰到 token -->
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    .admin { max-width: 880px; padding-block: 24px 64px; }
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+    .panel h2 { margin: 0 0 12px; font-size: 20px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .field label { font-size: 14px; color: var(--muted); }
+    .field input, .field select, .field textarea { font: inherit; font-size: 16px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px; width: 100%; }
+    .field input[type=color] { height: 42px; padding: 4px; cursor: pointer; }
+    .field textarea { min-height: 120px; resize: vertical; line-height: 1.7; }
+    #body { min-height: 320px; }
+    .full { grid-column: 1 / -1; }
+    .hint { font-size: 13px; color: var(--muted); }
+    .hint.warn { color: var(--danger); }
+    .hint.ok { color: var(--accent); }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .seo { font-size: 14px; border-left: 3px solid var(--accent); padding: 6px 12px; background: var(--chip); border-radius: 0 var(--radius) var(--radius) 0; }
+    .seo b { display: block; color: var(--accent); font-size: 16px; }
+    #status { min-height: 1.5em; font-size: 15px; }
+    #status.err { color: var(--danger); }
+    #confirm { border: 2px solid var(--accent); }
+    .preview-frame { border: 1px dashed var(--line); border-radius: var(--radius); padding: 0 16px 16px; }
+    details summary { cursor: pointer; color: var(--accent); }
+    details ol { padding-left: 20px; font-size: 15px; }
+    @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="site-header"><div class="wrap">
+    <a class="logo" href="index.html">書頁筆記</a>
+    <nav><a href="index.html" target="_blank" rel="noopener">看網站 ↗</a></nav>
+  </div></header>
+
+  <main class="wrap admin">
+    <h1>心得後台</h1>
+
+    <!-- 1. 連線 -->
+    <section class="panel" id="auth">
+      <h2>連線到 GitHub</h2>
+      <div class="field">
+        <label for="token">GitHub 存取權杖（只存在這台裝置的瀏覽器）</label>
+        <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label class="hint"><input type="checkbox" id="remember"> 記住在這台裝置</label>
+        <button class="btn" id="connect" type="button">連線</button>
+        <button class="btn btn-ghost" id="logout" type="button" hidden>清除權杖</button>
+      </div>
+      <details style="margin-top:12px">
+        <summary>第一次使用：怎麼產生權杖？</summary>
+        <ol>
+          <li>到 GitHub → Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b> → Generate new token。</li>
+          <li>Repository access 選 <b>Only select repositories</b> → <code>book-notes</code>。</li>
+          <li>Permissions → Repository permissions → <b>Contents：Read and write</b>，其他維持預設。</li>
+          <li>到期日建議 90 天；產生後複製，貼到上面的欄位。權杖只會顯示一次。</li>
+        </ol>
+        <p class="hint">權杖只能改 book-notes 這個 repository。不要貼在別的地方；在公用電腦上不要勾「記住」。</p>
+      </details>
+    </section>
+
+    <!-- 2. 編輯 -->
+    <section class="panel" id="editor" hidden>
+      <h2>寫心得</h2>
+      <div class="field" style="margin-bottom:14px">
+        <label for="pick">要編輯哪一篇？</label>
+        <select id="pick"></select>
+      </div>
+      <form id="form" class="grid2" novalidate>
+        <div class="field"><label for="title">書名 *</label><input id="title" required></div>
+        <div class="field"><label for="author">作者 *</label><input id="author" required></div>
+        <div class="field">
+          <label for="id">網址代號 *（英文小寫、數字、連字號）</label>
+          <input id="id" required placeholder="例如 deep-work" autocapitalize="off" spellcheck="false">
+          <span class="hint" id="id-hint">網址會是 …/book-notes/<span id="id-preview">代號</span>.html，發布後不要再改。</span>
+        </div>
+        <div class="field"><label for="category">分類 *</label><select id="category"></select></div>
+        <div class="field">
+          <label for="rating">評分</label>
+          <select id="rating"><option value="5">★★★★★ 5</option><option value="4">★★★★☆ 4</option><option value="3">★★★☆☆ 3</option><option value="2">★★☆☆☆ 2</option><option value="1">★☆☆☆☆ 1</option></select>
+        </div>
+        <div class="field"><label for="date">發布日期</label><input id="date" type="date"></div>
+        <div class="field"><label for="color">封面顏色</label><input id="color" type="color" value="#1f4e79"></div>
+        <div class="field"><label for="tags">標籤（用逗號或頓號分隔）</label><input id="tags" placeholder="習慣、生產力"></div>
+        <div class="field full">
+          <label for="summary">一句話摘要 *（也是 Google 搜尋結果的描述）</label>
+          <textarea id="summary" style="min-height:70px" required></textarea>
+          <span class="hint" id="summary-hint"></span>
+        </div>
+        <div class="field full">
+          <label for="body">心得內文 *（段落之間空一行）</label>
+          <textarea id="body" required></textarea>
+          <span class="hint" id="body-hint"></span>
+        </div>
+      </form>
+      <div class="seo" style="margin-top:16px" aria-label="Google 搜尋結果預覽">
+        <span class="hint" id="seo-url"></span>
+        <b id="seo-title"></b>
+        <span id="seo-desc"></span>
+      </div>
+      <div class="row" style="margin-top:16px">
+        <button class="btn" id="publish" type="button">發布到網站</button>
+        <button class="btn btn-ghost" id="discard" type="button">清空草稿</button>
+        <button class="btn btn-ghost" id="logout2" type="button">清除權杖並登出</button>
+        <span class="hint" id="draft-hint"></span>
+      </div>
+      <div class="panel" id="confirm" hidden style="margin-top:16px">
+        <p id="confirm-text"></p>
+        <div class="row">
+          <button class="btn" id="confirm-yes" type="button">確認發布</button>
+          <button class="btn btn-ghost" id="confirm-no" type="button">取消</button>
+        </div>
+      </div>
+      <p id="status" aria-live="polite"></p>
+    </section>
+
+    <!-- 3. 預覽 -->
+    <section class="panel" id="preview-panel" hidden>
+      <h2>預覽</h2>
+      <div class="preview-frame" id="preview"></div>
+    </section>
+  </main>
+
+<script>
+(function () {
+  'use strict';
+  var REPO = 'Drew-chen-yc/book-notes', BRANCH = 'main';
+  var SITE = 'https://drew-chen-yc.github.io/book-notes/';
+  var TOKEN_KEY = 'bn_admin_token', DRAFT_KEY = 'bn_admin_draft';
+  var PALETTE = ['#c8553d', '#3d5a80', '#6d597a', '#e09f3e', '#2a9d8f', '#588157', '#9c6644', '#264653'];
+
+  var token = '', reviewsSrc = '', REVIEWS = [], CATEGORIES = [], buildSite = null;
+  var $ = function (id) { return document.getElementById(id); };
+  var F = ['title', 'author', 'id', 'category', 'rating', 'date', 'color', 'tags', 'summary', 'body'];
+
+  function store(kind) { try { return kind === 'local' ? localStorage : sessionStorage; } catch (e) { return null; } }
+  function sget(k) { var s = store('local'), v = null; try { v = s && s.getItem(k); } catch (e) {} if (!v) { s = store('session'); try { v = s && s.getItem(k); } catch (e) {} } return v; }
+  function sset(k, v, kind) { var s = store(kind); try { s && s.setItem(k, v); } catch (e) {} }
+  function sdel(k) { ['local', 'session'].forEach(function (kind) { var s = store(kind); try { s && s.removeItem(k); } catch (e) {} }); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function status(msg, isErr) { var el = $('status'); el.innerHTML = msg; el.className = isErr ? 'err' : ''; }
+  function today() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+
+  /* ---------- GitHub API ---------- */
+  function api(path, opts) {
+    opts = opts || {};
+    return fetch('https://api.github.com/repos/' + REPO + path, {
+      method: opts.method || 'GET',
+      headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+      cache: 'no-store'
+    }).then(function (r) {
+      if (!r.ok) return r.text().then(function (t) { var e = new Error(r.status + ' ' + t.slice(0, 200)); e.status = r.status; throw e; });
+      return r.status === 204 ? null : r.json();
+    });
+  }
+  function decode64(b64) {
+    var bin = atob(b64.replace(/\n/g, '')), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+  function getFile(path) { return api('/contents/' + path + '?ref=' + BRANCH).then(function (j) { return decode64(j.content); }); }
+
+  /* reviews.js 是網站自己的資料檔，在獨立作用域執行取出資料 */
+  function evalData(src) { var w = {}; new Function('window', src)(w); return w; }
+
+  /* ---------- 連線 ---------- */
+  function connect() {
+    token = $('token').value.trim();
+    if (!token) { status('請先貼上權杖。', true); return; }
+    status('連線中…');
+    api('').then(function (repo) {
+      if (!repo.permissions || !repo.permissions.push) throw new Error('這個權杖沒有寫入權限，請確認 Contents 設為 Read and write。');
+      return Promise.all([getFile('data/reviews.js'), getFile('build/seo-build.js')]);
+    }).then(function (res) {
+      reviewsSrc = res[0];
+      var data = evalData(reviewsSrc);
+      REVIEWS = data.REVIEWS; CATEGORIES = data.CATEGORIES;
+      buildSite = new Function('module', res[1] + '\nreturn buildSite;')(undefined);
+      sdel(TOKEN_KEY);
+      sset(TOKEN_KEY, token, $('remember').checked ? 'local' : 'session');
+      $('auth').hidden = true; $('editor').hidden = false; $('preview-panel').hidden = false;
+      fillPickers(); loadDraftOrBlank();
+      status('已連線，目前有 ' + REVIEWS.length + ' 篇心得。');
+    }).catch(function (e) {
+      $('auth').hidden = false;
+      status(e.status === 401 ? '權杖無效或已過期，請重新產生。' : '連線失敗：' + esc(e.message), true);
+    });
+  }
+
+  function fillPickers() {
+    $('pick').innerHTML = '<option value="">＋ 新增一篇</option>' + REVIEWS.map(function (r) {
+      return '<option value="' + esc(r.id) + '">' + esc(r.date + '　' + r.title) + '</option>';
+    }).join('');
+    $('category').innerHTML = CATEGORIES.map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('');
+  }
+
+  /* ---------- 表單 ⇄ 資料 ---------- */
+  function setForm(r) {
+    $('title').value = r.title || ''; $('author').value = r.author || ''; $('id').value = r.id || '';
+    $('category').value = r.category || CATEGORIES[0]; $('rating').value = String(r.rating || 5);
+    $('date').value = r.date || today(); $('color').value = r.color || PALETTE[REVIEWS.length % PALETTE.length];
+    $('tags').value = (r.tags || []).join('、'); $('summary').value = r.summary || '';
+    $('body').value = (r.body || []).join('\n\n');
+    $('id').readOnly = !!$('pick').value;
+    refresh();
+  }
+  function readForm() {
+    return {
+      id: $('id').value.trim(),
+      title: $('title').value.trim(),
+      author: $('author').value.trim(),
+      category: $('category').value,
+      rating: Number($('rating').value),
+      date: $('date').value || today(),
+      color: $('color').value,
+      tags: $('tags').value.split(/[,，、\s]+/).map(function (t) { return t.replace(/^#/, '').trim(); }).filter(Boolean),
+      summary: $('summary').value.replace(/\s*\n\s*/g, '').trim(),
+      body: $('body').value.split(/\n\s*\n/).map(function (p) { return p.replace(/\s*\n\s*/g, '').trim(); }).filter(Boolean)
+    };
+  }
+  function validate(r) {
+    var errs = [];
+    if (!r.title) errs.push('書名');
+    if (!r.author) errs.push('作者');
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(r.id)) errs.push('網址代號（只能用英文小寫、數字、連字號）');
+    else if (!$('pick').value && REVIEWS.some(function (x) { return x.id === r.id; })) errs.push('網址代號已被使用');
+    else if (['index', 'review', 'about', 'admin', 'sitemap'].indexOf(r.id) > -1) errs.push('網址代號不能用保留字');
+    if (!r.summary) errs.push('摘要');
+    if (!r.body.length) errs.push('內文');
+    return errs;
+  }
+
+  /* ---------- 提示與預覽 ---------- */
+  function len(s) { return s.replace(/\s/g, '').length; }
+  function refresh() {
+    var r = readForm();
+    $('id-preview').textContent = r.id || '代號';
+    var sl = len(r.summary), bl = len(r.body.join(''));
+    var sh = $('summary-hint'), bh = $('body-hint');
+    sh.textContent = sl + ' 字' + (sl < 40 ? '：偏短，建議 50–120 字，放進書名與主要觀點' : sl > 120 ? '：偏長，Google 可能截斷，建議 120 字內' : '：長度剛好');
+    sh.className = 'hint ' + (sl >= 40 && sl <= 120 ? 'ok' : 'warn');
+    bh.textContent = r.body.length + ' 段、' + bl + ' 字，約 ' + Math.max(1, Math.round(bl / 400)) + ' 分鐘閱讀' + (bl < 1500 ? '：建議 1,500 字以上，比較容易被搜尋到' : '：篇幅足夠');
+    bh.className = 'hint ' + (bl >= 1500 ? 'ok' : 'warn');
+    $('seo-url').textContent = SITE.replace('https://', '') + (r.id || '…') + '.html';
+    $('seo-title').textContent = (r.title || '書名') + ' 讀書心得｜書頁筆記';
+    $('seo-desc').textContent = r.summary || '（摘要會顯示在這裡）';
+    var stars = '★★★★★'.slice(0, r.rating) + '☆☆☆☆☆'.slice(0, 5 - r.rating);
+    $('preview').innerHTML =
+      '<header class="review-head"><div class="cover cover-lg" style="--c:' + esc(r.color) + '"><span>' + esc(r.title || '書名') + '</span><small>' + esc(r.author) + '</small></div>' +
+      '<div><span class="tag">' + esc(r.category) + '</span><h1>' + esc(r.title || '書名') + '</h1><p class="meta">' + esc(r.author) + '</p>' +
+      '<p class="stars big">' + stars + '</p><p class="meta">' + esc(r.date) + '</p><p class="lead">' + esc(r.summary) + '</p></div></header>' +
+      '<article>' + r.body.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') +
+      '<p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p></article>';
+    if (!$('pick').value) { sset(DRAFT_KEY, JSON.stringify(r), 'local'); $('draft-hint').textContent = '草稿已自動存在這台裝置'; }
+  }
+  function loadDraftOrBlank() {
+    $('pick').value = '';
+    var d = null; try { d = JSON.parse(sget(DRAFT_KEY) || 'null'); } catch (e) {}
+    setForm(d || { date: today() });
+  }
+
+  /* ---------- 發布：一次 commit 資料檔、靜態頁、sitemap ---------- */
+  function serialize(list) {
+    var start = reviewsSrc.indexOf('window.REVIEWS = [');
+    var catIdx = reviewsSrc.indexOf('window.CATEGORIES');
+    var end = reviewsSrc.lastIndexOf('];', catIdx);
+    if (start < 0 || catIdx < 0 || end < start) throw new Error('data/reviews.js 格式和預期不同，未發布。');
+    return reviewsSrc.slice(0, start) + 'window.REVIEWS = ' + JSON.stringify(list, null, 2) + ';' + reviewsSrc.slice(end + 2);
+  }
+  function askPublish() {
+    var r = readForm(), errs = validate(r);
+    if (errs.length) { status('還缺：' + errs.join('、'), true); return; }
+    var editing = !!$('pick').value;
+    $('confirm-text').innerHTML = (editing ? '更新' : '發布新心得') + '〈<b>' + esc(r.title) + '</b>〉到 ' + esc(SITE + r.id + '.html') + '？發布後約 1 分鐘生效。';
+    $('confirm').hidden = false;
+  }
+  function publish() {
+    $('confirm').hidden = true;
+    var r = readForm(), editing = !!$('pick').value;
+    var list = REVIEWS.filter(function (x) { return x.id !== r.id; }).concat([r]);
+    list.sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
+    var newSrc, files;
+    try {
+      newSrc = serialize(list);
+      var check = evalData(newSrc);
+      if (check.REVIEWS.length !== list.length || !check.CATEGORIES || !check.STORES) throw new Error('產生的資料檔驗證失敗，未發布。');
+      files = buildSite(list, { today: today() });
+    } catch (e) { status(esc(e.message), true); return; }
+    var tree = [{ path: 'data/reviews.js', mode: '100644', type: 'blob', content: newSrc }];
+    Object.keys(files).forEach(function (name) { tree.push({ path: name, mode: '100644', type: 'blob', content: files[name] }); });
+    var msg = (editing ? '更新心得：' : '新增心得：') + r.title + '（' + r.id + '）';
+    $('publish').disabled = true; status('發布中…');
+    var headSha;
+    api('/git/ref/heads/' + BRANCH).then(function (ref) {
+      headSha = ref.object.sha;
+      return api('/git/commits/' + headSha);
+    }).then(function (c) {
+      return api('/git/trees', { method: 'POST', body: { base_tree: c.tree.sha, tree: tree } });
+    }).then(function (t) {
+      return api('/git/commits', { method: 'POST', body: { message: msg, tree: t.sha, parents: [headSha] } });
+    }).then(function (c) {
+      return api('/git/refs/heads/' + BRANCH, { method: 'PATCH', body: { sha: c.sha } }).then(function () { return c; });
+    }).then(function (c) {
+      REVIEWS = list; reviewsSrc = newSrc;
+      if (!editing) sdel(DRAFT_KEY);
+      fillPickers(); $('pick').value = r.id; $('id').readOnly = true;
+      var url = SITE + r.id + '.html';
+      status('已發布！約 1 分鐘後可看：<a href="' + url + '" target="_blank" rel="noopener">' + esc(url) + '</a>（<a href="https://github.com/' + REPO + '/commit/' + c.sha + '" target="_blank" rel="noopener">這次的變更</a>）');
+    }).catch(function (e) {
+      status(e.status === 409 || e.status === 422 ? '網站剛好被別處更新，請重新整理頁面後再發布。' : '發布失敗：' + esc(e.message), true);
+    }).then(function () { $('publish').disabled = false; });
+  }
+
+  /* ---------- 綁定 ---------- */
+  $('connect').addEventListener('click', connect);
+  $('token').addEventListener('keydown', function (e) { if (e.key === 'Enter') connect(); });
+  ['logout', 'logout2'].forEach(function (id) { $(id).addEventListener('click', function () { sdel(TOKEN_KEY); location.reload(); }); });
+  $('form').addEventListener('input', refresh);
+  $('form').addEventListener('change', refresh);
+  $('pick').addEventListener('change', function () {
+    var id = $('pick').value;
+    if (!id) { loadDraftOrBlank(); return; }
+    setForm(REVIEWS.filter(function (x) { return x.id === id; })[0]);
+    $('draft-hint').textContent = '正在編輯已發布的心得';
+  });
+  $('publish').addEventListener('click', askPublish);
+  $('confirm-yes').addEventListener('click', publish);
+  $('confirm-no').addEventListener('click', function () { $('confirm').hidden = true; });
+  $('discard').addEventListener('click', function () { sdel(DRAFT_KEY); $('pick').value = ''; setForm({ date: today() }); status('草稿已清空。'); });
+
+  var saved = sget(TOKEN_KEY);
+  if (saved) { $('token').value = saved; $('logout').hidden = false; $('remember').checked = !!(store('local') && store('local').getItem(TOKEN_KEY)); connect(); }
+})();
+</script>
+</body>
+</html>
