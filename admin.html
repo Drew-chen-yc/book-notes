@@ -47,11 +47,10 @@
     <section class="panel" id="auth">
       <h2>連線到 GitHub</h2>
       <div class="field">
-        <label for="token">GitHub 存取權杖（只存在這台裝置的瀏覽器）</label>
+        <label for="token">GitHub 存取權杖（只保留在這個分頁，關閉分頁就清除）</label>
         <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
       </div>
       <div class="row" style="margin-top:10px">
-        <label class="hint"><input type="checkbox" id="remember"> 記住在這台裝置</label>
         <button class="btn" id="connect" type="button">連線</button>
         <button class="btn btn-ghost" id="logout" type="button" hidden>清除權杖</button>
       </div>
@@ -63,7 +62,7 @@
           <li>Permissions → Repository permissions → <b>Contents：Read and write</b>，其他維持預設。</li>
           <li>到期日建議 90 天；產生後複製，貼到上面的欄位。權杖只會顯示一次。</li>
         </ol>
-        <p class="hint">權杖只能改 book-notes 這個 repository。不要貼在別的地方；在公用電腦上不要勾「記住」。</p>
+        <p class="hint">權杖只能改 book-notes 這個 repository，不要貼在別的地方。為了安全，後台不會把權杖存在裝置上，每次開新分頁要重新貼一次；可以存在密碼管理工具裡方便取用。</p>
       </details>
     </section>
 
@@ -186,7 +185,7 @@
       REVIEWS = data.REVIEWS; CATEGORIES = data.CATEGORIES;
       buildSite = new Function('module', res[1] + '\nreturn buildSite;')(undefined);
       sdel(TOKEN_KEY);
-      sset(TOKEN_KEY, token, $('remember').checked ? 'local' : 'session');
+      sset(TOKEN_KEY, token, 'session');
       $('auth').hidden = true; $('editor').hidden = false; $('preview-panel').hidden = false;
       fillPickers(); loadDraftOrBlank();
       status('已連線，目前有 ' + REVIEWS.length + ' 篇心得。');
@@ -337,8 +336,9 @@
   $('confirm-no').addEventListener('click', function () { $('confirm').hidden = true; });
   $('discard').addEventListener('click', function () { sdel(DRAFT_KEY); $('pick').value = ''; setForm({ date: today() }); status('草稿已清空。'); });
 
-  var saved = sget(TOKEN_KEY);
-  if (saved) { $('token').value = saved; $('logout').hidden = false; $('remember').checked = !!(store('local') && store('local').getItem(TOKEN_KEY)); connect(); }
+  try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}   // 清掉舊版可能留在裝置上的權杖
+  var saved = null; try { saved = sessionStorage.getItem(TOKEN_KEY); } catch (e) {}
+  if (saved) { $('token').value = saved; $('logout').hidden = false; connect(); }
 })();
 </script>
 </body>

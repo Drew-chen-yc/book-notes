@@ -28,10 +28,21 @@
     <p>本站使用 Google Analytics 4 與 Google 代碼管理工具收集匿名的瀏覽行為（例如看了哪些心得、閱讀深度、點了哪些連結），用於改善內容。廣告成效衡量與再行銷用的 Cookie，只有在您按「全部接受」後才會啟用。</p>
     <ul>
       <li>我們不會把您的 Email 或任何可識別個人的資料傳給 Google Analytics。</li>
+      <li>訂閱電子報時，我們只蒐集您填的 Email 與感興趣的分類，用途僅限寄送新心得通知；資料存放在本站管理者的 Google 表單，不會提供給第三方，保存到您取消訂閱為止。</li>
       <li>選擇「僅必要」時，分析與廣告 Cookie 都不會啟用。</li>
       <li>收藏紀錄與閱讀偏好只存在您的瀏覽器中。</li>
     </ul>
     <p><button type="button" class="btn btn-ghost" id="reset-consent">重新選擇 Cookie 設定</button></p>
+    <h2 id="unsubscribe-title">取消訂閱電子報</h2>
+    <p>輸入當初訂閱的 Email，我們會在 7 天內從名單移除並刪除資料。想查詢或更正資料，也可以用這個表單提出。</p>
+    <form id="unsubscribe" novalidate>
+      <div class="form-row">
+        <label class="sr-only" for="unsub-email">訂閱時使用的 Email</label>
+        <input id="unsub-email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+        <button class="btn btn-ghost" type="submit">取消訂閱</button>
+      </div>
+      <p class="form-msg" aria-live="polite"></p>
+    </form>
   </main>
   <script>
     document.getElementById('reset-consent').addEventListener('click', function () {
