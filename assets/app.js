@@ -19,12 +19,13 @@
   function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
-  /* 心得頁網址：正式站用 ?id=（GA 報表較好讀）；預覽環境可設 BN_LINK_MODE='hash' 改用 #id */
+  /* 心得頁網址：正式站每篇一個靜態頁 <id>.html（SEO 用）；預覽環境可設 BN_LINK_MODE='hash' 改用 #id */
   function reviewHref(id) {
-    return window.BN_LINK_MODE === 'hash' ? 'review.html#' + id : 'review.html?id=' + encodeURIComponent(id);
+    return window.BN_LINK_MODE === 'hash' ? 'review.html#' + id : id + '.html';
   }
   function currentReviewId() {
-    return new URLSearchParams(location.search).get('id') || location.hash.replace('#', '') || null;
+    return document.documentElement.getAttribute('data-review-id') ||
+      new URLSearchParams(location.search).get('id') || location.hash.replace('#', '') || null;
   }
 
   function cover(r, size) {
@@ -158,8 +159,8 @@
     });
 
     /* 分享（GA4 建議事件 share） */
-    var shareUrl = location.origin + location.pathname + '?id=' + r.id +
-      '&utm_source=share&utm_medium=social&utm_campaign=review_share';
+    var shareUrl = location.origin + location.pathname.replace(/[^/]*$/, '') + r.id + '.html' +
+      '?utm_source=share&utm_medium=social&utm_campaign=review_share';
     main.addEventListener('click', function (e) {
       var b = e.target.closest('[data-share]');
       if (!b) return;
