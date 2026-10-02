@@ -11,12 +11,21 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  /* 內文段落：「## 」開頭是小標題、「### 」是次標題，其餘是一般段落 */
-  function bodyBlock(p) {
-    var m = /^(#{2,3})\s+(.+)$/.exec(p);
-    return m ? '<h' + m[1].length + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '<p>' + esc(p) + '</p>';
+  /* 內文段落：「## 」開頭是小標題、「### 」是次標題、連續的「- 」是條列，其餘是一般段落 */
+  function bodyHtml(body) {
+    var out = [], li = [];
+    function flush() { if (li.length) { out.push('<ul>' + li.join('') + '</ul>'); li = []; } }
+    body.forEach(function (p) {
+      if (p.indexOf('- ') === 0) { li.push('<li>' + esc(p.slice(2)) + '</li>'); return; }
+      flush();
+      var m = /^(#{2,3})\s+(.+)$/.exec(p);
+      out.push(m ? '<h' + m[1].length + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '<p>' + esc(p) + '</p>');
+    });
+    flush();
+    return out;
   }
-  function stars(n) { return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
+  /* 評分可以是 4.5 這種半顆星 */
+  function stars(n) { var f = Math.floor(n), h = n > f ? 1 : 0; return '★★★★★'.slice(0, f) + (h ? '<span class="star-half">☆</span>' : '') + '☆☆☆☆☆'.slice(0, 5 - f - h); }
   function readMinutes(r) { return Math.max(1, Math.round(r.body.join('').length / 400)); }
   function reviewParams(r) {
     var p = { review_id: r.id, book_title: r.title, book_author: r.author, book_category: r.category, rating: r.rating };
@@ -171,7 +180,7 @@
       '<p class="meta">' + esc(r.author) + '</p><p class="stars big" aria-label="' + r.rating + ' 顆星">' + stars(r.rating) + '</p>' +
       '<p class="meta">' + r.date + ' · 約 ' + readMinutes(r) + ' 分鐘閱讀</p>' +
       '<p class="lead">' + esc(r.summary) + '</p></div></header>' +
-      '<article id="article">' + r.body.map(bodyBlock).join('') +
+      '<article id="article">' + bodyHtml(r.body).join('') +
       '<p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p></article>' +
       '<section class="actions" aria-label="互動">' +
       '<button type="button" id="like" class="btn btn-ghost" aria-pressed="' + liked + '">' + (liked ? '♥ 已收藏' : '♡ 收藏這篇') + '</button>' +
