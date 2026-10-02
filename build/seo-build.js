@@ -91,7 +91,10 @@ function buildSite(REVIEWS, opts) {
       '      <p class="lead">' + esc(r.summary) + '</p></div>',
       '    </header>',
       '    <article id="article">',
-      r.body.map(function (p) { return '      <p>' + esc(p) + '</p>'; }).join('\n'),
+      r.body.map(function (p) {
+        var m = /^(#{2,3})\s+(.+)$/.exec(p);   // 「## 」小標題、「### 」次標題
+        return m ? '      <h' + m[1].length + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '      <p>' + esc(p) + '</p>';
+      }).join('\n'),
       '      <p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p>',
       '    </article>',
       '  </main>',
