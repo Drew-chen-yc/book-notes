@@ -25,6 +25,20 @@
     return out;
   }
   /* 評分可以是 4.5 這種半顆星 */
+  /* SEO 用字：標題、H1、開頭第一句都對準「書名＋心得／評價／好看嗎」這類搜尋字詞 */
+  function seoAsk(r) { return r.category === '小說' ? '好看嗎' : '值得讀嗎'; }
+  function seoH1(r) { return '《' + r.title + '》' + (r.category === '小說' ? '心得與評價' : '讀書心得與評價'); }
+  function seoTitle(r) { return seoH1(r) + '：' + seoAsk(r) + '？｜書頁筆記'; }
+  function seoIntro(r) {
+    return '《' + r.title + '》' + seoAsk(r) + '？這篇是我讀完' + (/^[A-Za-z]/.test(r.author) ? ' ' : '') + r.author +
+      (r.category === '小說' ? '這部' + (r.subcategory || '') + '小說' : '這本書') + '之後寫的心得與評價，給 ' + r.rating + ' 顆星。';
+  }
+  /* 文末推薦：同子分類優先，再來同分類，不夠才補其他分類 */
+  function relatedOf(r, list, n) {
+    return list.filter(function (x) { return x.id !== r.id; }).map(function (x, i) {
+      return { x: x, i: i, s: (x.category === r.category ? 4 : 0) + (r.subcategory && x.subcategory === r.subcategory ? 2 : 0) + ((x.category === '小說') === (r.category === '小說') ? 1 : 0) };
+    }).sort(function (a, b) { return b.s - a.s || a.i - b.i; }).slice(0, n).map(function (o) { return o.x; });
+  }
   function stars(n) { var f = Math.floor(n), h = n > f ? 1 : 0; return '★★★★★'.slice(0, f) + (h ? '<span class="star-half">☆</span>' : '') + '☆☆☆☆☆'.slice(0, 5 - f - h); }
   function readMinutes(r) { return Math.max(1, Math.round(r.body.join('').length / 400)); }
   function reviewParams(r) {
@@ -165,9 +179,9 @@
       track('review_not_found', { review_id: id || '(empty)' });
       return;
     }
-    document.title = r.title + ' 讀書心得｜書頁筆記';
+    document.title = seoTitle(r);
     var md = document.querySelector('meta[name="description"]');
-    if (md) md.setAttribute('content', r.summary);
+    if (md) md.setAttribute('content', seoIntro(r) + r.summary);
 
     var base = reviewParams(r);
     var liked = safeGet('bn_like_' + r.id) === '1';
@@ -176,9 +190,10 @@
       '<nav class="crumb"><a href="index.html">首頁</a> / <a href="index.html?cat=' + encodeURIComponent(r.category) + '">' + esc(r.category) + '</a>' +
       (r.subcategory ? ' / <a href="index.html?cat=' + encodeURIComponent(r.category) + '&sub=' + encodeURIComponent(r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>' +
       '<header class="review-head">' + cover(r, 'lg') +
-      '<div><span class="tag">' + esc(catLabel(r)) + '</span><h1>' + esc(r.title) + '</h1>' +
+      '<div><span class="tag">' + esc(catLabel(r)) + '</span><h1>' + esc(seoH1(r)) + '</h1>' +
       '<p class="meta">' + esc(r.author) + '</p><p class="stars big" aria-label="' + r.rating + ' 顆星">' + stars(r.rating) + '</p>' +
       '<p class="meta">' + r.date + ' · 約 ' + readMinutes(r) + ' 分鐘閱讀</p>' +
+      '<p class="intro">' + esc(seoIntro(r)) + '</p>' +
       '<p class="lead">' + esc(r.summary) + '</p></div></header>' +
       '<article id="article">' + bodyHtml(r.body).join('') +
       '<p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p></article>' +
@@ -232,10 +247,9 @@
     });
 
     /* 相關推薦 */
-    var rel = REVIEWS.filter(function (x) { return x.id !== r.id && x.category === r.category; });
-    if (rel.length < 2) rel = rel.concat(REVIEWS.filter(function (x) { return x.id !== r.id && x.category !== r.category; })).slice(0, 3);
+    var rel = relatedOf(r, REVIEWS, 4);
     var relBox = $('#related');
-    relBox.innerHTML = rel.slice(0, 3).map(function (x, i) { return card(x, 'review_related', i + 1); }).join('');
+    relBox.innerHTML = rel.map(function (x, i) { return card(x, 'review_related', i + 1); }).join('');
     bindCardClicks(relBox);
   }
 
