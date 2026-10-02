@@ -111,7 +111,10 @@ window.REVIEWS = [
   }
 ];
 
-window.CATEGORIES = ['自我成長', '心理學', '歷史', '投資理財'];
+window.CATEGORIES = ['自我成長', '心理學', '歷史', '投資理財', '小說'];
+
+/* 子分類：只有列在這裡的分類才有子分類（心得資料用 subcategory 欄位） */
+window.SUBCATEGORIES = { '小說': ['仙俠', '玄幻', '歷史', '愛情', '翻譯', '其他'] };
 
 /* 外部購書通路（click_buy_book 事件的 store 參數） */
 window.STORES = [
