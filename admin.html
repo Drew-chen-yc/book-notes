@@ -96,7 +96,7 @@
           <span class="hint" id="summary-hint"></span>
         </div>
         <div class="field full">
-          <label for="body">心得內文 *（段落之間空一行）</label>
+          <label for="body">心得內文 *（段落之間空一行；小標題寫成「## 標題」，次標題「### 標題」，各自獨立一段）</label>
           <textarea id="body" required></textarea>
           <span class="hint" id="body-hint"></span>
         </div>
@@ -269,7 +269,7 @@
       '<header class="review-head"><div class="cover cover-lg" style="--c:' + esc(r.color) + '"><span>' + esc(r.title || '書名') + '</span><small>' + esc(r.author) + '</small></div>' +
       '<div><span class="tag">' + esc(r.category + (r.subcategory ? '・' + r.subcategory : '')) + '</span><h1>' + esc(r.title || '書名') + '</h1><p class="meta">' + esc(r.author) + '</p>' +
       '<p class="stars big">' + stars + '</p><p class="meta">' + esc(r.date) + '</p><p class="lead">' + esc(r.summary) + '</p></div></header>' +
-      '<article>' + r.body.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') +
+      '<article>' + r.body.map(function (p) { var m = /^(#{2,3})\s+(.+)$/.exec(p); return m ? '<h' + m[1].length + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '<p>' + esc(p) + '</p>'; }).join('') +
       '<p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p></article>';
     if (!$('pick').value) { sset(DRAFT_KEY, JSON.stringify(r), 'local'); $('draft-hint').textContent = '草稿已自動存在這台裝置'; }
   }
