@@ -49,7 +49,8 @@ function buildSite(REVIEWS, opts) {
       inLanguage: 'zh-Hant-TW',
       reviewBody: r.summary,
       author: { '@type': 'Organization', name: '書頁筆記', url: BASE },
-      itemReviewed: { '@type': 'Book', name: r.title, author: { '@type': 'Person', name: r.author } },
+      itemReviewed: Object.assign({ '@type': 'Book', name: r.title, author: { '@type': 'Person', name: r.author } },
+        r.subcategory ? { genre: r.category + '／' + r.subcategory } : {}),
       reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5, worstRating: 1 }
     };
     files[r.id + '.html'] = [
@@ -81,9 +82,10 @@ function buildSite(REVIEWS, opts) {
       '    <nav><a href="index.html">心得</a><a href="about.html">關於</a></nav>',
       '  </div></header>',
       '  <main class="wrap narrow" id="review">',
-      '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="index.html?cat=' + encodeURIComponent(r.category) + '">' + esc(r.category) + '</a></nav>',
+      '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="index.html?cat=' + encodeURIComponent(r.category) + '">' + esc(r.category) + '</a>' +
+        (r.subcategory ? ' / <a href="index.html?cat=' + encodeURIComponent(r.category) + '&sub=' + encodeURIComponent(r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>',
       '    <header class="review-head">',
-      '      <div><span class="tag">' + esc(r.category) + '</span><h1>' + esc(r.title) + '</h1>',
+      '      <div><span class="tag">' + esc(r.category + (r.subcategory ? '・' + r.subcategory : '')) + '</span><h1>' + esc(r.title) + '</h1>',
       '      <p class="meta">' + esc(r.author) + '</p><p class="stars big" aria-label="' + r.rating + ' 顆星">' + stars(r.rating) + '</p>',
       '      <p class="meta">' + r.date + '</p>',
       '      <p class="lead">' + esc(r.summary) + '</p></div>',
