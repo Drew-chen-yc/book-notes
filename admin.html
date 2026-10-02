@@ -82,6 +82,7 @@
           <span class="hint" id="id-hint">網址會是 …/book-notes/<span id="id-preview">代號</span>.html，發布後不要再改。</span>
         </div>
         <div class="field"><label for="category">分類 *</label><select id="category"></select></div>
+        <div class="field" id="sub-field" hidden><label for="subcategory">子分類 *</label><select id="subcategory"></select></div>
         <div class="field">
           <label for="rating">評分</label>
           <select id="rating"><option value="5">★★★★★ 5</option><option value="4">★★★★☆ 4</option><option value="3">★★★☆☆ 3</option><option value="2">★★☆☆☆ 2</option><option value="1">★☆☆☆☆ 1</option></select>
@@ -136,7 +137,7 @@
   var TOKEN_KEY = 'bn_admin_token', DRAFT_KEY = 'bn_admin_draft';
   var PALETTE = ['#c8553d', '#3d5a80', '#6d597a', '#e09f3e', '#2a9d8f', '#588157', '#9c6644', '#264653'];
 
-  var token = '', reviewsSrc = '', REVIEWS = [], CATEGORIES = [], buildSite = null;
+  var token = '', reviewsSrc = '', REVIEWS = [], CATEGORIES = [], SUBS = {}, buildSite = null;
   var $ = function (id) { return document.getElementById(id); };
   var F = ['title', 'author', 'id', 'category', 'rating', 'date', 'color', 'tags', 'summary', 'body'];
 
@@ -182,7 +183,7 @@
     }).then(function (res) {
       reviewsSrc = res[0];
       var data = evalData(reviewsSrc);
-      REVIEWS = data.REVIEWS; CATEGORIES = data.CATEGORIES;
+      REVIEWS = data.REVIEWS; CATEGORIES = data.CATEGORIES; SUBS = data.SUBCATEGORIES || {};
       buildSite = new Function('module', res[1] + '\nreturn buildSite;')(undefined);
       sdel(TOKEN_KEY);
       sset(TOKEN_KEY, token, 'session');
@@ -201,11 +202,18 @@
     }).join('');
     $('category').innerHTML = CATEGORIES.map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('');
   }
+  /* 子分類選單：只有該分類有子分類（例如小說）時才出現 */
+  function fillSubs(selected) {
+    var subs = SUBS[$('category').value];
+    $('sub-field').hidden = !subs;
+    $('subcategory').innerHTML = (subs || []).map(function (s) { return '<option>' + esc(s) + '</option>'; }).join('');
+    if (subs) $('subcategory').value = subs.indexOf(selected) > -1 ? selected : subs[0];
+  }
 
   /* ---------- 表單 ⇄ 資料 ---------- */
   function setForm(r) {
     $('title').value = r.title || ''; $('author').value = r.author || ''; $('id').value = r.id || '';
-    $('category').value = r.category || CATEGORIES[0]; $('rating').value = String(r.rating || 5);
+    $('category').value = r.category || CATEGORIES[0]; fillSubs(r.subcategory); $('rating').value = String(r.rating || 5);
     $('date').value = r.date || today(); $('color').value = r.color || PALETTE[REVIEWS.length % PALETTE.length];
     $('tags').value = (r.tags || []).join('、'); $('summary').value = r.summary || '';
     $('body').value = (r.body || []).join('\n\n');
@@ -213,11 +221,13 @@
     refresh();
   }
   function readForm() {
-    return {
+    var hasSub = !!SUBS[$('category').value];
+    var r = {
       id: $('id').value.trim(),
       title: $('title').value.trim(),
       author: $('author').value.trim(),
       category: $('category').value,
+      subcategory: hasSub ? $('subcategory').value : undefined,
       rating: Number($('rating').value),
       date: $('date').value || today(),
       color: $('color').value,
@@ -225,6 +235,8 @@
       summary: $('summary').value.replace(/\s*\n\s*/g, '').trim(),
       body: $('body').value.split(/\n\s*\n/).map(function (p) { return p.replace(/\s*\n\s*/g, '').trim(); }).filter(Boolean)
     };
+    if (!hasSub) delete r.subcategory;
+    return r;
   }
   function validate(r) {
     var errs = [];
@@ -255,7 +267,7 @@
     var stars = '★★★★★'.slice(0, r.rating) + '☆☆☆☆☆'.slice(0, 5 - r.rating);
     $('preview').innerHTML =
       '<header class="review-head"><div class="cover cover-lg" style="--c:' + esc(r.color) + '"><span>' + esc(r.title || '書名') + '</span><small>' + esc(r.author) + '</small></div>' +
-      '<div><span class="tag">' + esc(r.category) + '</span><h1>' + esc(r.title || '書名') + '</h1><p class="meta">' + esc(r.author) + '</p>' +
+      '<div><span class="tag">' + esc(r.category + (r.subcategory ? '・' + r.subcategory : '')) + '</span><h1>' + esc(r.title || '書名') + '</h1><p class="meta">' + esc(r.author) + '</p>' +
       '<p class="stars big">' + stars + '</p><p class="meta">' + esc(r.date) + '</p><p class="lead">' + esc(r.summary) + '</p></div></header>' +
       '<article>' + r.body.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') +
       '<p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p></article>';
@@ -323,6 +335,7 @@
   $('connect').addEventListener('click', connect);
   $('token').addEventListener('keydown', function (e) { if (e.key === 'Enter') connect(); });
   ['logout', 'logout2'].forEach(function (id) { $(id).addEventListener('click', function () { sdel(TOKEN_KEY); location.reload(); }); });
+  $('category').addEventListener('change', function () { fillSubs(); });
   $('form').addEventListener('input', refresh);
   $('form').addEventListener('change', refresh);
   $('pick').addEventListener('change', function () {
