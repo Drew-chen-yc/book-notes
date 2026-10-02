@@ -262,7 +262,7 @@
     bh.textContent = r.body.length + ' 段、' + bl + ' 字，約 ' + Math.max(1, Math.round(bl / 400)) + ' 分鐘閱讀' + (bl < 1500 ? '：建議 1,500 字以上，比較容易被搜尋到' : '：篇幅足夠');
     bh.className = 'hint ' + (bl >= 1500 ? 'ok' : 'warn');
     $('seo-url').textContent = SITE.replace('https://', '') + (r.id || '…') + '.html';
-    $('seo-title').textContent = (r.title || '書名') + ' 讀書心得｜書頁筆記';
+    $('seo-title').textContent = '《' + (r.title || '書名') + '》' + (r.category === '小說' ? '心得與評價：好看嗎？' : '讀書心得與評價：值得讀嗎？') + '｜書頁筆記';
     $('seo-desc').textContent = r.summary || '（摘要會顯示在這裡）';
     var stars = (function (n) { var f = Math.floor(n), h = n > f ? 1 : 0; return '★★★★★'.slice(0, f) + (h ? '<span class="star-half">☆</span>' : '') + '☆☆☆☆☆'.slice(0, 5 - f - h); })(r.rating);
     var blocks = [], li = [];
