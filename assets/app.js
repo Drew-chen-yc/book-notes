@@ -14,8 +14,13 @@
   function stars(n) { return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
   function readMinutes(r) { return Math.max(1, Math.round(r.body.join('').length / 400)); }
   function reviewParams(r) {
-    return { review_id: r.id, book_title: r.title, book_author: r.author, book_category: r.category, rating: r.rating };
+    var p = { review_id: r.id, book_title: r.title, book_author: r.author, book_category: r.category, rating: r.rating };
+    if (r.subcategory) p.book_subcategory = r.subcategory;
+    return p;
   }
+  /* 分類顯示：有子分類時顯示「小說・仙俠」 */
+  var SUBS = window.SUBCATEGORIES || {};
+  function catLabel(r) { return r.category + (r.subcategory ? '・' + r.subcategory : ''); }
   /* 搜尋字若含 Email 或電話樣式，送進 GA 前先遮蔽（Google 政策禁止把個資送進 GA） */
   function redactPII(t) {
     return String(t).replace(/[^\s@]+@[^\s@]+\.[^\s@]+/g, '[redacted]').replace(/\+?\d[\d\s-]{7,}\d/g, '[redacted]');
@@ -39,7 +44,7 @@
   function card(r, listName, pos) {
     return '<a class="card" href="' + reviewHref(r.id) + '" data-id="' + r.id +
       '" data-list="' + listName + '" data-pos="' + pos + '">' + cover(r, 'sm') +
-      '<div class="card-body"><span class="tag">' + esc(r.category) + '</span>' +
+      '<div class="card-body"><span class="tag">' + esc(catLabel(r)) + '</span>' +
       '<h3>' + esc(r.title) + '</h3><p class="meta">' + esc(r.author) + ' · <span class="stars" aria-label="' + r.rating + ' 顆星">' + stars(r.rating) + '</span></p>' +
       '<p>' + esc(r.summary) + '</p><p class="meta">' + r.date + ' · 約 ' + readMinutes(r) + ' 分鐘</p></div></a>';
   }
@@ -58,7 +63,11 @@
   /* ================= 首頁 ================= */
   function initHome() {
     var list = $('#review-list'), empty = $('#empty'), input = $('#search'), chips = $('#chips');
-    var state = { q: '', cat: '全部' };
+    var state = { q: '', cat: '全部', sub: '全部' };
+    var subchips = document.createElement('div');
+    subchips.id = 'subchips'; subchips.className = 'chips subchips'; subchips.hidden = true;
+    subchips.setAttribute('role', 'group'); subchips.setAttribute('aria-label', '子分類篩選');
+    chips.parentNode.insertBefore(subchips, chips.nextSibling);
 
     chips.innerHTML = ['全部'].concat(window.CATEGORIES).map(function (c) {
       return '<button type="button" class="chip' + (c === '全部' ? ' active' : '') + '" data-cat="' + c + '">' + c + '</button>';
@@ -68,8 +77,9 @@
       var q = state.q.trim().toLowerCase();
       return REVIEWS.filter(function (r) {
         var okCat = state.cat === '全部' || r.category === state.cat;
-        var hay = (r.title + r.author + r.category + r.summary + r.tags.join(' ')).toLowerCase();
-        return okCat && (!q || hay.indexOf(q) > -1);
+        var okSub = state.sub === '全部' || r.subcategory === state.sub;
+        var hay = (r.title + r.author + r.category + (r.subcategory || '') + r.summary + r.tags.join(' ')).toLowerCase();
+        return okCat && okSub && (!q || hay.indexOf(q) > -1);
       });
     }
     function render() {
@@ -84,11 +94,31 @@
     chips.addEventListener('click', function (e) {
       var b = e.target.closest('.chip');
       if (!b) return;
-      state.cat = b.dataset.cat;
+      state.cat = b.dataset.cat; state.sub = '全部';
       chips.querySelectorAll('.chip').forEach(function (c) { c.classList.toggle('active', c === b); });
+      renderSubchips();
       var n = render();
       if (b.dataset.silent) { delete b.dataset.silent; return; }   // 網址帶入的不算使用者操作
       track('filter_category', { book_category: state.cat, results_count: n });
+    });
+
+    /* 子分類：選到有子分類的分類（例如小說）時，才出現第二排標籤 */
+    function renderSubchips() {
+      var subs = SUBS[state.cat];
+      subchips.hidden = !subs;
+      subchips.innerHTML = !subs ? '' : ['全部'].concat(subs).map(function (s) {
+        return '<button type="button" class="chip chip-sub' + (s === state.sub ? ' active' : '') + '" data-sub="' + s + '">' + s + '</button>';
+      }).join('');
+    }
+    subchips.addEventListener('click', function (e) {
+      var b = e.target.closest('.chip');
+      if (!b) return;
+      var silent = !!b.dataset.silent;
+      state.sub = b.dataset.sub;
+      renderSubchips();
+      var n = render();
+      if (silent) return;
+      track('filter_category', { book_category: state.cat, book_subcategory: state.sub, results_count: n });
     });
 
     /* 搜尋：停止輸入 1 秒後才送，避免每個字都送一次 */
@@ -129,9 +159,10 @@
     var liked = safeGet('bn_like_' + r.id) === '1';
 
     main.innerHTML =
-      '<nav class="crumb"><a href="index.html">首頁</a> / <a href="index.html?cat=' + encodeURIComponent(r.category) + '">' + esc(r.category) + '</a></nav>' +
+      '<nav class="crumb"><a href="index.html">首頁</a> / <a href="index.html?cat=' + encodeURIComponent(r.category) + '">' + esc(r.category) + '</a>' +
+      (r.subcategory ? ' / <a href="index.html?cat=' + encodeURIComponent(r.category) + '&sub=' + encodeURIComponent(r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>' +
       '<header class="review-head">' + cover(r, 'lg') +
-      '<div><span class="tag">' + esc(r.category) + '</span><h1>' + esc(r.title) + '</h1>' +
+      '<div><span class="tag">' + esc(catLabel(r)) + '</span><h1>' + esc(r.title) + '</h1>' +
       '<p class="meta">' + esc(r.author) + '</p><p class="stars big" aria-label="' + r.rating + ' 顆星">' + stars(r.rating) + '</p>' +
       '<p class="meta">' + r.date + ' · 約 ' + readMinutes(r) + ' 分鐘閱讀</p>' +
       '<p class="lead">' + esc(r.summary) + '</p></div></header>' +
@@ -217,6 +248,12 @@
     var started = false, sending = false;
     var loc = page || 'other';
     var msg = f.querySelector('.form-msg');
+    // 興趣分類選單跟著 CATEGORIES 走，新增分類不用改每一頁
+    if (f.interest && window.CATEGORIES) {
+      f.interest.innerHTML = '<option value="all">全部分類</option>' + window.CATEGORIES.map(function (c) {
+        return '<option value="' + esc(c) + '">' + esc(c) + '</option>';
+      }).join('');
+    }
     // 蜜罐欄位：真人看不到，機器人會填 → 直接丟棄
     var trap = document.createElement('input');
     trap.type = 'text'; trap.name = 'website'; trap.tabIndex = -1; trap.autocomplete = 'off';
@@ -279,7 +316,11 @@
     if (!cat) return;
     // 只接受既有分類，不把網址參數直接組進選擇器
     var b = Array.prototype.filter.call(document.querySelectorAll('.chip'), function (c) { return c.dataset.cat === cat; })[0];
-    if (b) { b.dataset.silent = '1'; b.click(); }
+    if (!b) return;
+    b.dataset.silent = '1'; b.click();
+    var sub = new URLSearchParams(location.search).get('sub');
+    var sb = sub && Array.prototype.filter.call(document.querySelectorAll('#subchips .chip'), function (c) { return c.dataset.sub === sub; })[0];
+    if (sb) { sb.dataset.silent = '1'; sb.click(); }
   }
 
   if (page === 'home') { initHome(); applyCatParam(); }
