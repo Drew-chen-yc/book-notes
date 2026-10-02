@@ -39,6 +39,11 @@
       return { x: x, i: i, s: (x.category === r.category ? 4 : 0) + (r.subcategory && x.subcategory === r.subcategory ? 2 : 0) + ((x.category === '小說') === (r.category === '小說') ? 1 : 0) };
     }).sort(function (a, b) { return b.s - a.s || a.i - b.i; }).slice(0, n).map(function (o) { return o.x; });
   }
+  /* 這篇心得被哪些書單收錄（書單資料在 data/reviews.js 的 window.LISTS） */
+  function inLists(r) {
+    var ls = (window.LISTS || []).filter(function (l) { return l.sections.some(function (s) { return (s.items || []).some(function (it) { return it.id === r.id; }); }); });
+    return !ls.length ? '' : '<p class="meta in-lists">收錄在：' + ls.map(function (l) { return '<a href="' + esc(l.id) + '.html">' + esc(l.title) + '</a>'; }).join('、') + '</p>';
+  }
   function stars(n) { var f = Math.floor(n), h = n > f ? 1 : 0; return '★★★★★'.slice(0, f) + (h ? '<span class="star-half">☆</span>' : '') + '☆☆☆☆☆'.slice(0, 5 - f - h); }
   function readMinutes(r) { return Math.max(1, Math.round(r.body.join('').length / 400)); }
   function reviewParams(r) {
@@ -80,7 +85,7 @@
   /* 列表點擊 → select_content（GA4 建議事件） */
   function bindCardClicks(root) {
     root.addEventListener('click', function (e) {
-      var a = e.target.closest('a.card');
+      var a = e.target.closest('a[data-list]');
       if (!a) return;
       var r = REVIEWS.find(function (x) { return x.id === a.dataset.id; });
       track('select_content', Object.assign({ content_type: 'review', content_id: a.dataset.id,
@@ -207,7 +212,7 @@
       window.STORES.map(function (s) {
         return '<a class="btn" target="_blank" rel="noopener" data-store="' + s.key + '" href="' + s.url(r) + '">到' + s.name + '看看 ↗</a>';
       }).join('') + '</div></section>' +
-      '<section class="related"><h2>同類型心得</h2><div id="related" class="grid"></div></section>';
+      '<section class="related"><h2>同類型心得</h2><div id="related" class="grid"></div></section>' + inLists(r);
 
     track('view_review', base);
     window.BN.bumpProfile('view', r.category);
@@ -353,6 +358,7 @@
 
   if (page === 'home') { initHome(); applyCatParam(); }
   if (page === 'review') initReview();
+  if (page === 'list' || page === 'books') bindCardClicks($('main'));   // 書單與總表的連結也送 select_content
   initNewsletter();
   initUnsubscribe();
 })();

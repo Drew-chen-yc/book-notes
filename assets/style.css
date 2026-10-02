@@ -127,3 +127,25 @@ h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; }
 
 .form-note { font-size: 13px; color: var(--muted); margin: 8px 0 0 !important; }
 #unsubscribe { margin-top: 12px; }
+
+/* 書單文與總表頁 */
+.listing { padding-top: 32px; padding-bottom: 40px; }
+.listing h1 { font-size: clamp(24px, 4.5vw, 32px); line-height: 1.35; margin: 12px 0 8px; }
+.listing h2 { font-size: 21px; margin: 28px 0 8px; }
+.quick { font-size: 15px; }
+.quick a { display: inline-block; margin-right: 14px; }
+.in-lists { margin-top: 12px; }
+.books { width: 100%; border-collapse: collapse; margin-top: 16px; }
+.books th, .books td { text-align: left; vertical-align: top; padding: 10px 8px; border-bottom: 1px solid var(--line); font-size: 15px; }
+.books th { color: var(--muted); font-weight: 500; white-space: nowrap; }
+.books td:nth-child(2), .books td:nth-child(3) { white-space: nowrap; }
+.books small { color: var(--muted); }
+.pick { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.pick h3 { margin: 0 0 4px; font-size: 18px; }
+.pick p { margin: 4px 0; }
+@media (max-width: 600px) {
+  .books thead { display: none; }
+  .books tr { display: block; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .books td { display: inline; border: 0; padding: 0 8px 0 0; }
+  .books td:first-child, .books td:last-child { display: block; padding: 2px 0; }
+}
