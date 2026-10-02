@@ -85,7 +85,7 @@
         <div class="field" id="sub-field" hidden><label for="subcategory">子分類 *</label><select id="subcategory"></select></div>
         <div class="field">
           <label for="rating">評分</label>
-          <select id="rating"><option value="5">★★★★★ 5</option><option value="4">★★★★☆ 4</option><option value="3">★★★☆☆ 3</option><option value="2">★★☆☆☆ 2</option><option value="1">★☆☆☆☆ 1</option></select>
+          <select id="rating"><option value="5">★★★★★ 5</option><option value="4.5">★★★★½ 4.5</option><option value="4">★★★★☆ 4</option><option value="3.5">★★★½ 3.5</option><option value="3">★★★☆☆ 3</option><option value="2">★★☆☆☆ 2</option><option value="1">★☆☆☆☆ 1</option></select>
         </div>
         <div class="field"><label for="date">發布日期</label><input id="date" type="date"></div>
         <div class="field"><label for="color">封面顏色</label><input id="color" type="color" value="#1f4e79"></div>
@@ -96,7 +96,7 @@
           <span class="hint" id="summary-hint"></span>
         </div>
         <div class="field full">
-          <label for="body">心得內文 *（段落之間空一行；小標題寫成「## 標題」，次標題「### 標題」，各自獨立一段）</label>
+          <label for="body">心得內文 *（段落之間空一行；小標題寫成「## 標題」，次標題「### 標題」，條列每項寫成「- 內容」，各自獨立一段）</label>
           <textarea id="body" required></textarea>
           <span class="hint" id="body-hint"></span>
         </div>
@@ -264,12 +264,20 @@
     $('seo-url').textContent = SITE.replace('https://', '') + (r.id || '…') + '.html';
     $('seo-title').textContent = (r.title || '書名') + ' 讀書心得｜書頁筆記';
     $('seo-desc').textContent = r.summary || '（摘要會顯示在這裡）';
-    var stars = '★★★★★'.slice(0, r.rating) + '☆☆☆☆☆'.slice(0, 5 - r.rating);
+    var stars = (function (n) { var f = Math.floor(n), h = n > f ? 1 : 0; return '★★★★★'.slice(0, f) + (h ? '<span class="star-half">☆</span>' : '') + '☆☆☆☆☆'.slice(0, 5 - f - h); })(r.rating);
+    var blocks = [], li = [];
+    r.body.concat(['']).forEach(function (p) {
+      if (p.indexOf('- ') === 0) { li.push('<li>' + esc(p.slice(2)) + '</li>'); return; }
+      if (li.length) { blocks.push('<ul>' + li.join('') + '</ul>'); li = []; }
+      if (!p) return;
+      var m = /^(#{2,3})\s+(.+)$/.exec(p);
+      blocks.push(m ? '<h' + m[1].length + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '<p>' + esc(p) + '</p>');
+    });
     $('preview').innerHTML =
       '<header class="review-head"><div class="cover cover-lg" style="--c:' + esc(r.color) + '"><span>' + esc(r.title || '書名') + '</span><small>' + esc(r.author) + '</small></div>' +
       '<div><span class="tag">' + esc(r.category + (r.subcategory ? '・' + r.subcategory : '')) + '</span><h1>' + esc(r.title || '書名') + '</h1><p class="meta">' + esc(r.author) + '</p>' +
       '<p class="stars big">' + stars + '</p><p class="meta">' + esc(r.date) + '</p><p class="lead">' + esc(r.summary) + '</p></div></header>' +
-      '<article>' + r.body.map(function (p) { var m = /^(#{2,3})\s+(.+)$/.exec(p); return m ? '<h' + m[1].length + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '<p>' + esc(p) + '</p>'; }).join('') +
+      '<article>' + blocks.join('') +
       '<p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p></article>';
     if (!$('pick').value) { sset(DRAFT_KEY, JSON.stringify(r), 'local'); $('draft-hint').textContent = '草稿已自動存在這台裝置'; }
   }
