@@ -11,6 +11,11 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
+  /* 內文段落：「## 」開頭是小標題、「### 」是次標題，其餘是一般段落 */
+  function bodyBlock(p) {
+    var m = /^(#{2,3})\s+(.+)$/.exec(p);
+    return m ? '<h' + m[1].length + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '<p>' + esc(p) + '</p>';
+  }
   function stars(n) { return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
   function readMinutes(r) { return Math.max(1, Math.round(r.body.join('').length / 400)); }
   function reviewParams(r) {
@@ -166,7 +171,7 @@
       '<p class="meta">' + esc(r.author) + '</p><p class="stars big" aria-label="' + r.rating + ' 顆星">' + stars(r.rating) + '</p>' +
       '<p class="meta">' + r.date + ' · 約 ' + readMinutes(r) + ' 分鐘閱讀</p>' +
       '<p class="lead">' + esc(r.summary) + '</p></div></header>' +
-      '<article id="article">' + r.body.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') +
+      '<article id="article">' + r.body.map(bodyBlock).join('') +
       '<p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p></article>' +
       '<section class="actions" aria-label="互動">' +
       '<button type="button" id="like" class="btn btn-ghost" aria-pressed="' + liked + '">' + (liked ? '♥ 已收藏' : '♡ 收藏這篇') + '</button>' +

@@ -71,6 +71,8 @@ input:focus, select:focus, .btn:focus-visible, .chip:focus-visible { outline: 2p
 .lead { margin-top: 12px !important; font-size: 18px; }
 article { padding: 12px 0; }
 article p { margin: 1.1em 0; }
+article h2 { font-size: 24px; line-height: 1.4; margin: 1.8em 0 .4em; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+article h3 { font-size: 19px; line-height: 1.5; margin: 1.5em 0 .2em; color: var(--accent); }
 .tags span { display: inline-block; margin-right: 10px; color: var(--muted); font-size: 14px; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .share-label { margin-left: auto; color: var(--muted); font-size: 14px; }
