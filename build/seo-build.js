@@ -1,6 +1,7 @@
 /* seo-build.js — 依 data/reviews.js 產生每篇心得的靜態頁與 sitemap.xml
  * 同一份程式可在 Node（node build/run.js）或瀏覽器執行
  * 新增或修改心得後重新產生一次即可
+ * 另外產生 books.html（總表）與每篇書單文 <id>.html（opts.lists = window.LISTS）
  */
 function buildSite(REVIEWS, opts) {
   var BASE = (opts && opts.base) || 'https://drew-chen-yc.github.io/book-notes/';
@@ -62,6 +63,49 @@ function buildSite(REVIEWS, opts) {
     ''
   ].join('\n');
 
+  /* 書單文（data/reviews.js 的 window.LISTS）與總表頁共用的小工具 */
+  var LISTS = (opts && opts.lists) || [];
+  function byId(id) { for (var i = 0; i < REVIEWS.length; i++) if (REVIEWS[i].id === id) return REVIEWS[i]; return null; }
+  function catLabel(r) { return r.category + (r.subcategory ? '・' + r.subcategory : ''); }
+  function para(p) { return '    <p>' + esc(p) + '</p>'; }
+  function listLink(l) { return '<a href="' + esc(l.id) + '.html">' + esc(l.title) + '</a>'; }
+  function listsOf(r) {
+    return LISTS.filter(function (l) { return l.sections.some(function (s) { return (s.items || []).some(function (it) { return it.id === r.id; }); }); });
+  }
+  function shell(o) {   // 書單、總表這類靜態頁的外殼
+    return [
+      '<!doctype html>',
+      '<html lang="zh-Hant-TW" data-page-type="' + o.type + '" data-content-group="' + o.group + '">',
+      '<head>',
+      '  <meta charset="utf-8">',
+      '  <meta name="viewport" content="width=device-width, initial-scale=1">',
+      '  <title>' + esc(o.title) + '｜書頁筆記</title>',
+      '  <meta name="description" content="' + esc(o.desc) + '">',
+      '  <link rel="canonical" href="' + BASE + o.file + '">',
+      '  <meta property="og:type" content="article">',
+      '  <meta property="og:site_name" content="書頁筆記">',
+      '  <meta property="og:title" content="' + esc(o.title) + '">',
+      '  <meta property="og:description" content="' + esc(o.desc) + '">',
+      '  <meta property="og:url" content="' + BASE + o.file + '">',
+      '  <meta name="twitter:card" content="summary">',
+      '  <!-- 追蹤程式必須最先載入：Consent 預設值 → dataLayer 脈絡 → GTM -->',
+      '  <script src="assets/analytics.js"></script>',
+      '  <link rel="preconnect" href="https://fonts.googleapis.com">',
+      '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">',
+      '  <link rel="stylesheet" href="assets/style.css">',
+      '</head>',
+      '<body>',
+      '  <header class="site-header"><div class="wrap">',
+      '    <a class="logo" href="index.html">書頁筆記</a>',
+      '    <nav><a href="index.html">心得</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>',
+      '  </div></header>',
+      '  <main class="wrap narrow listing">',
+      o.main,
+      '  </main>',
+      FOOT
+    ].join('\n');
+  }
+
   var files = {};
   REVIEWS.forEach(function (r) {
     var url = BASE + r.id + '.html';
@@ -105,7 +149,7 @@ function buildSite(REVIEWS, opts) {
       '<body>',
       '  <header class="site-header"><div class="wrap">',
       '    <a class="logo" href="index.html">書頁筆記</a>',
-      '    <nav><a href="index.html">心得</a><a href="about.html">關於</a></nav>',
+      '    <nav><a href="index.html">心得</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>',
       '  </div></header>',
       '  <main class="wrap narrow" id="review">',
       '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="index.html?cat=' + encodeURIComponent(r.category) + '">' + esc(r.category) + '</a>' +
@@ -124,13 +168,65 @@ function buildSite(REVIEWS, opts) {
       '    <section class="related"><h2>同類型心得</h2><ul>',
       rel.map(function (x) { return '      <li><a href="' + esc(x.id) + '.html">' + esc(seoH1(x)) + '</a>（' + esc(x.author) + '）</li>'; }).join('\n'),
       '    </ul></section>',
+      listsOf(r).length ? '    <p class="meta in-lists">收錄在：' + listsOf(r).map(listLink).join('、') + '</p>' : '',
       '  </main>',
       FOOT
     ].join('\n');
   });
 
+  /* 總表：全部的書一頁看完（書名、類型、評分、一句話），依評分排序 */
+  var sorted = REVIEWS.map(function (r, i) { return { r: r, i: i }; })
+    .sort(function (a, b) { return b.r.rating - a.r.rating || a.i - b.i; }).map(function (o) { return o.r; });
+  files['books.html'] = shell({
+    file: 'books.html', type: 'books', group: '總表',
+    title: '全部的書：' + REVIEWS.length + ' 本讀書心得的評分與一句話短評',
+    desc: '書頁筆記讀過的 ' + REVIEWS.length + ' 本書總表，含類型、評分和一句話短評，點書名看完整心得。',
+    main: [
+      '    <h1>全部的書</h1>',
+      '    <p class="meta">共 ' + REVIEWS.length + ' 本，依評分排序，滿分 5 顆星。點書名看完整心得。</p>',
+      LISTS.length ? '    <p class="quick">書單：' + LISTS.map(listLink).join('') + '</p>' : '',
+      '    <table class="books"><thead><tr><th>書名</th><th>類型</th><th>評分</th><th>一句話</th></tr></thead><tbody>',
+      sorted.map(function (r, i) {
+        return '      <tr><td><a href="' + esc(r.id) + '.html" data-id="' + esc(r.id) + '" data-list="all_books" data-pos="' + (i + 1) + '">《' + esc(r.title) + '》</a><br><small>' + esc(r.author) + '</small></td>' +
+          '<td>' + esc(catLabel(r)) + '</td><td>' + r.rating + '</td><td>' + esc(r.summary.split('。')[0] + '。') + '</td></tr>';
+      }).join('\n'),
+      '    </tbody></table>'
+    ].join('\n')
+  });
+
+  /* 書單文：每篇一個靜態頁，項目連回單本心得 */
+  LISTS.forEach(function (l) {
+    var pos = 0;
+    files[l.id + '.html'] = shell({
+      file: l.id + '.html', type: 'list', group: '書單', title: l.title, desc: l.description,
+      main: [
+        '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="books.html">全部的書</a></nav>',
+        '    <h1>' + esc(l.title) + '</h1>',
+        '    <p class="meta">' + l.date + '</p>',
+        (l.intro || []).map(para).join('\n'),
+        l.sections.map(function (s) {
+          return (s.heading ? ['    <h2>' + esc(s.heading) + '</h2>'] : []).concat((s.paras || []).map(para), (s.items || []).map(function (it) {
+            var r = byId(it.id);
+            if (!r) throw new Error('書單 ' + l.id + ' 找不到心得 ' + it.id);
+            pos += 1;
+            return '    <div class="pick"><h3><a href="' + esc(r.id) + '.html" data-id="' + esc(r.id) + '" data-list="list_' + esc(l.id) + '" data-pos="' + pos + '">《' + esc(r.title) + '》</a> ' +
+              '<span class="stars" aria-label="' + r.rating + ' 顆星">' + stars(r.rating) + '</span></h3>' +
+              '<p class="meta">' + esc(r.author) + ' · ' + esc(catLabel(r)) + '</p><p>' + esc(it.note) + '</p></div>';
+          })).join('\n');
+        }).join('\n'),
+        (l.outro || []).map(para).join('\n'),
+        '    <section class="related"><h2>繼續看</h2><ul>',
+        LISTS.filter(function (x) { return x.id !== l.id; }).map(function (x) { return '      <li>' + listLink(x) + '</li>'; }).join('\n'),
+        '      <li><a href="books.html">全部的書（總表）</a></li>',
+        '    </ul></section>'
+      ].join('\n')
+    });
+  });
+
   var urls = [{ loc: BASE, lastmod: TODAY }, { loc: BASE + 'about.html', lastmod: TODAY }]
-    .concat(REVIEWS.map(function (r) { return { loc: BASE + r.id + '.html', lastmod: r.date }; }));
+    .concat(REVIEWS.map(function (r) { return { loc: BASE + r.id + '.html', lastmod: r.date }; }))
+    .concat([{ loc: BASE + 'books.html', lastmod: TODAY }])
+    .concat(LISTS.map(function (l) { return { loc: BASE + l.id + '.html', lastmod: l.date }; }));
   files['sitemap.xml'] = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     urls.map(function (u) { return '  <url><loc>' + u.loc + '</loc><lastmod>' + u.lastmod + '</lastmod></url>'; }).join('\n') +
     '\n</urlset>\n';
