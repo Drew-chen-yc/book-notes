@@ -10,7 +10,19 @@ function buildSite(REVIEWS, opts) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function stars(n) { return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
+  function stars(n) { var f = Math.floor(n), h = n > f ? 1 : 0; return '★★★★★'.slice(0, f) + (h ? '<span class="star-half">☆</span>' : '') + '☆☆☆☆☆'.slice(0, 5 - f - h); }
+  function bodyHtml(body) {   // 「## 」小標題、「### 」次標題、連續的「- 」條列
+    var out = [], li = [];
+    function flush() { if (li.length) { out.push('<ul>' + li.join('') + '</ul>'); li = []; } }
+    body.forEach(function (p) {
+      if (p.indexOf('- ') === 0) { li.push('<li>' + esc(p.slice(2)) + '</li>'); return; }
+      flush();
+      var m = /^(#{2,3})\s+(.+)$/.exec(p);
+      out.push(m ? '<h' + m[1].length + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '<p>' + esc(p) + '</p>');
+    });
+    flush();
+    return out;
+  }
   var FOOT = [
     '  <footer class="site-footer"><div class="wrap">',
     '    <form id="newsletter" novalidate>',
@@ -91,10 +103,7 @@ function buildSite(REVIEWS, opts) {
       '      <p class="lead">' + esc(r.summary) + '</p></div>',
       '    </header>',
       '    <article id="article">',
-      r.body.map(function (p) {
-        var m = /^(#{2,3})\s+(.+)$/.exec(p);   // 「## 」小標題、「### 」次標題
-        return m ? '      <h' + m[1].length + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '      <p>' + esc(p) + '</p>';
-      }).join('\n'),
+      bodyHtml(r.body).map(function (x) { return '      ' + x; }).join('\n'),
       '      <p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p>',
       '    </article>',
       '  </main>',
