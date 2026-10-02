@@ -11,6 +11,20 @@ function buildSite(REVIEWS, opts) {
     });
   }
   function stars(n) { var f = Math.floor(n), h = n > f ? 1 : 0; return '★★★★★'.slice(0, f) + (h ? '<span class="star-half">☆</span>' : '') + '☆☆☆☆☆'.slice(0, 5 - f - h); }
+  /* SEO 用字：標題、H1、開頭第一句都對準「書名＋心得／評價／好看嗎」這類搜尋字詞 */
+  function seoAsk(r) { return r.category === '小說' ? '好看嗎' : '值得讀嗎'; }
+  function seoH1(r) { return '《' + r.title + '》' + (r.category === '小說' ? '心得與評價' : '讀書心得與評價'); }
+  function seoTitle(r) { return seoH1(r) + '：' + seoAsk(r) + '？｜書頁筆記'; }
+  function seoIntro(r) {
+    return '《' + r.title + '》' + seoAsk(r) + '？這篇是我讀完' + (/^[A-Za-z]/.test(r.author) ? ' ' : '') + r.author +
+      (r.category === '小說' ? '這部' + (r.subcategory || '') + '小說' : '這本書') + '之後寫的心得與評價，給 ' + r.rating + ' 顆星。';
+  }
+  /* 文末推薦：同子分類優先，再來同分類，不夠才補其他分類 */
+  function relatedOf(r, list, n) {
+    return list.filter(function (x) { return x.id !== r.id; }).map(function (x, i) {
+      return { x: x, i: i, s: (x.category === r.category ? 4 : 0) + (r.subcategory && x.subcategory === r.subcategory ? 2 : 0) + ((x.category === '小說') === (r.category === '小說') ? 1 : 0) };
+    }).sort(function (a, b) { return b.s - a.s || a.i - b.i; }).slice(0, n).map(function (o) { return o.x; });
+  }
   function bodyHtml(body) {   // 「## 」小標題、「### 」次標題、連續的「- 」條列
     var out = [], li = [];
     function flush() { if (li.length) { out.push('<ul>' + li.join('') + '</ul>'); li = []; } }
@@ -51,11 +65,11 @@ function buildSite(REVIEWS, opts) {
   var files = {};
   REVIEWS.forEach(function (r) {
     var url = BASE + r.id + '.html';
-    var title = r.title + ' 讀書心得｜書頁筆記';
+    var title = seoTitle(r), intro = seoIntro(r), desc = intro + r.summary, rel = relatedOf(r, REVIEWS, 4);
     var ld = {
       '@context': 'https://schema.org',
       '@type': 'Review',
-      name: r.title + ' 讀書心得',
+      name: seoH1(r),
       url: url,
       datePublished: r.date,
       inLanguage: 'zh-Hant-TW',
@@ -72,12 +86,12 @@ function buildSite(REVIEWS, opts) {
       '  <meta charset="utf-8">',
       '  <meta name="viewport" content="width=device-width, initial-scale=1">',
       '  <title>' + esc(title) + '</title>',
-      '  <meta name="description" content="' + esc(r.summary) + '">',
+      '  <meta name="description" content="' + esc(desc) + '">',
       '  <link rel="canonical" href="' + url + '">',
       '  <meta property="og:type" content="article">',
       '  <meta property="og:site_name" content="書頁筆記">',
       '  <meta property="og:title" content="' + esc(title) + '">',
-      '  <meta property="og:description" content="' + esc(r.summary) + '">',
+      '  <meta property="og:description" content="' + esc(desc) + '">',
       '  <meta property="og:url" content="' + url + '">',
       '  <meta property="article:published_time" content="' + r.date + '">',
       '  <meta name="twitter:card" content="summary">',
@@ -97,15 +111,19 @@ function buildSite(REVIEWS, opts) {
       '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="index.html?cat=' + encodeURIComponent(r.category) + '">' + esc(r.category) + '</a>' +
         (r.subcategory ? ' / <a href="index.html?cat=' + encodeURIComponent(r.category) + '&sub=' + encodeURIComponent(r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>',
       '    <header class="review-head">',
-      '      <div><span class="tag">' + esc(r.category + (r.subcategory ? '・' + r.subcategory : '')) + '</span><h1>' + esc(r.title) + '</h1>',
+      '      <div><span class="tag">' + esc(r.category + (r.subcategory ? '・' + r.subcategory : '')) + '</span><h1>' + esc(seoH1(r)) + '</h1>',
       '      <p class="meta">' + esc(r.author) + '</p><p class="stars big" aria-label="' + r.rating + ' 顆星">' + stars(r.rating) + '</p>',
       '      <p class="meta">' + r.date + '</p>',
+      '      <p class="intro">' + esc(intro) + '</p>',
       '      <p class="lead">' + esc(r.summary) + '</p></div>',
       '    </header>',
       '    <article id="article">',
       bodyHtml(r.body).map(function (x) { return '      ' + x; }).join('\n'),
       '      <p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p>',
       '    </article>',
+      '    <section class="related"><h2>同類型心得</h2><ul>',
+      rel.map(function (x) { return '      <li><a href="' + esc(x.id) + '.html">' + esc(seoH1(x)) + '</a>（' + esc(x.author) + '）</li>'; }).join('\n'),
+      '    </ul></section>',
       '  </main>',
       FOOT
     ].join('\n');
