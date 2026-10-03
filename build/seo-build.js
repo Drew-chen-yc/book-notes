@@ -57,7 +57,7 @@ function buildSite(REVIEWS, opts) {
     '    <p class="copyright">© 2026 書頁筆記 · <a href="about.html#privacy">隱私說明</a></p>',
     '  </div></footer>',
     '  <script src="data/reviews.js"></script>',
-    '  <script src="assets/app.js?v=20261003b"></script>',
+    '  <script src="assets/app.js?v=20261003c"></script>',
     '</body>',
     '</html>',
     ''
@@ -99,12 +99,12 @@ function buildSite(REVIEWS, opts) {
       '  <script src="assets/analytics.js"></script>',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261003b">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261003c">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
       '    <a class="logo" href="index.html">書頁筆記</a>',
-      '    <nav><a href="index.html">心得</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>',
+      '    <nav><a href="reviews.html">心得</a><a href="lists.html">書單</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>',
       '  </div></header>',
       '  <main class="wrap narrow listing">',
       o.main,
@@ -151,16 +151,16 @@ function buildSite(REVIEWS, opts) {
       '  <script src="assets/analytics.js"></script>',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261003b">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261003c">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
       '    <a class="logo" href="index.html">書頁筆記</a>',
-      '    <nav><a href="index.html">心得</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>',
+      '    <nav><a href="reviews.html">心得</a><a href="lists.html">書單</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>',
       '  </div></header>',
       '  <main class="wrap narrow" id="review">',
-      '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="index.html?cat=' + encodeURIComponent(r.category) + '">' + esc(r.category) + '</a>' +
-        (r.subcategory ? ' / <a href="index.html?cat=' + encodeURIComponent(r.category) + '&sub=' + encodeURIComponent(r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>',
+      '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="reviews.html?cat=' + encodeURIComponent(r.category) + '">' + esc(r.category) + '</a>' +
+        (r.subcategory ? ' / <a href="reviews.html?cat=' + encodeURIComponent(r.category) + '&sub=' + encodeURIComponent(r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>',
       '    <header class="review-head">',
       '      ' + cover(r, 'lg'),
       '      <div><span class="tag">' + esc(r.category + (r.subcategory ? '・' + r.subcategory : '')) + '</span><h1>' + esc(seoH1(r)) + '</h1>',
@@ -208,7 +208,7 @@ function buildSite(REVIEWS, opts) {
     files[l.id + '.html'] = shell({
       file: l.id + '.html', type: 'list', group: '書單', title: l.title, desc: l.description,
       main: [
-        '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="books.html">全部的書</a></nav>',
+        '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="lists.html">書單</a></nav>',
         '    <h1>' + esc(l.title) + '</h1>',
         '    <p class="meta">' + l.date + '</p>',
         (l.intro || []).map(para).join('\n'),
@@ -231,7 +231,23 @@ function buildSite(REVIEWS, opts) {
     });
   });
 
+  /* 書單總覽頁：列出所有書單 */
+  files['lists.html'] = shell({
+    file: 'lists.html', type: 'lists', group: '書單',
+    title: '書單：依主題整理的讀書心得',
+    desc: '書頁筆記的 ' + LISTS.length + ' 份書單，把讀過的書依主題整理，每本附短評和完整心得連結。',
+    main: [
+      '    <h1>書單</h1>',
+      '    <p class="meta">共 ' + LISTS.length + ' 份，把讀過的書依主題整理。</p>',
+      LISTS.map(function (l) {
+        var n = l.sections.reduce(function (a, s) { return a + (s.items || []).length; }, 0);
+        return '    <a class="list-card" href="' + esc(l.id) + '.html"><b>' + esc(l.title) + '</b><span>' + esc(l.description) + '</span><small>' + n + ' 本 · ' + l.date + '</small></a>';
+      }).join('\n')
+    ].join('\n')
+  });
+
   var urls = [{ loc: BASE, lastmod: TODAY }, { loc: BASE + 'about.html', lastmod: TODAY }]
+    .concat([{ loc: BASE + 'reviews.html', lastmod: TODAY }, { loc: BASE + 'lists.html', lastmod: TODAY }])
     .concat(REVIEWS.map(function (r) { return { loc: BASE + r.id + '.html', lastmod: r.date }; }))
     .concat([{ loc: BASE + 'books.html', lastmod: TODAY }])
     .concat(LISTS.map(function (l) { return { loc: BASE + l.id + '.html', lastmod: l.date }; }));
