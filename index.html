@@ -14,8 +14,8 @@
   <!-- 追蹤程式必須最先載入：Consent 預設值 → dataLayer 脈絡 → GTM -->
   <script src="assets/analytics.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
-  <link rel="stylesheet" href="assets/style.css?v=20261003">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="assets/style.css?v=20261003b">
 </head>
 <body>
   <header class="site-header"><div class="wrap">
@@ -23,9 +23,34 @@
     <nav><a href="index.html">心得</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>
   </div></header>
   <main class="wrap">
-    <section class="hero">
-      <h1>讀完一本書，寫下一點想法</h1>
-      <p class="quick"><a href="books.html">全部的書（總表）</a><a href="webnovel-ranking.html">網路小說評分整理</a><a href="tomato-compare.html">番茄兩部比較</a><a href="standalone-novels.html">單本完結小說</a></p>
+    <section class="hero2">
+      <div class="hero2-text">
+        <p class="eyebrow">書頁筆記</p>
+        <h1>讀完一本書，<br>寫下一點想法</h1>
+        <ul class="facts"><li><b data-count="reviews">20</b> 篇心得</li><li><b data-count="lists">3</b> 份書單</li><li>滿分 <b>5</b> 顆星</li></ul>
+        <p class="cta"><a class="btn btn-dark" href="books.html">看全部的書</a><a class="btn btn-sun" href="#newsletter">訂閱新心得</a></p>
+      </div>
+      <svg class="hero2-art" viewBox="0 0 360 300" role="img" aria-label="一疊書的插圖">
+        <path d="M38 150c-8-52 30-104 92-112 40-5 62 14 104 6 46-9 86 20 92 68 5 42-22 60-20 96 2 40-36 66-84 62-36-3-52-22-90-18-50 6-88-46-94-102z" fill="var(--sky)"/>
+        <path d="M70 96c30-22 60-26 96-18M250 60c28 6 46 22 56 46" fill="none" stroke="var(--sky-2)" stroke-width="10" stroke-linecap="round"/>
+        <g transform="rotate(-4 180 214)"><rect x="84" y="196" width="196" height="38" rx="7" fill="var(--ink)"/><rect x="96" y="204" width="172" height="22" rx="3" fill="#fff" opacity=".92"/><rect x="84" y="196" width="26" height="38" rx="7" fill="var(--ink)"/></g>
+        <g transform="rotate(3 180 170)"><rect x="100" y="152" width="170" height="36" rx="7" fill="var(--blue)"/><rect x="112" y="160" width="146" height="20" rx="3" fill="#fff" opacity=".92"/><rect x="100" y="152" width="24" height="36" rx="7" fill="var(--blue)"/></g>
+        <g transform="rotate(-2 180 128)"><rect x="92" y="112" width="184" height="34" rx="7" fill="var(--sun)"/><rect x="104" y="119" width="160" height="20" rx="3" fill="#fff" opacity=".92"/><rect x="92" y="112" width="24" height="34" rx="7" fill="var(--sun)"/></g>
+        <g transform="translate(128 34)"><path d="M56 62C40 50 18 48 2 54V10C18 4 40 6 56 18c16-12 38-14 54-8v44c-16-6-38-4-54 8z" fill="#fff"/><path d="M56 18v44" stroke="var(--sky-2)" stroke-width="3"/><path d="M14 22c10-3 22-2 32 4M14 34c10-3 22-2 32 4M66 26c10-6 22-7 32-4M66 38c10-6 22-7 32-4" stroke="var(--sky-2)" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M84 4h14v30l-7-6-7 6z" fill="var(--sun)"/></g>
+        <path d="M300 180l4 10 10 4-10 4-4 10-4-10-10-4 10-4zM58 214l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#fff"/>
+      </svg>
+    </section>
+    <section class="start" aria-labelledby="start-h">
+      <h2 id="start-h">從這裡開始</h2>
+      <div class="start-grid">
+        <a class="door" href="books.html"><span class="door-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14" /><path d="M12 6v14" /><path d="M8 8v12" /><path d="M4 4v16" /></svg></span><b>全部的書</b><small><span data-count="reviews">20</span> 本，依評分排序的總表</small></a>
+        <a class="door" href="webnovel-ranking.html"><span class="door-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2" /><path d="M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2" /><path d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3" /><path d="M4 22h16" /><path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" /><path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3" /></svg></span><b>網路小說評分整理</b><small>7 部追到完結的長篇</small></a>
+        <a class="door" href="tomato-compare.html"><span class="door-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18" /><path d="m19 8 3 8a5 5 0 0 1-6 0zV7" /><path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1" /><path d="m5 8 3 8a5 5 0 0 1-6 0zV7" /><path d="M7 21h10" /></svg></span><b>番茄兩部比較</b><small>吞噬星空、宇宙職業選手先看哪部</small></a>
+        <a class="door" href="standalone-novels.html"><span class="door-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.751a.25.25 0 00.407.195l2.28-1.834a.5.5 0 01.627 0l2.28 1.834A.25.25 0 0016 9.751V2" /><path d="M4 19.5v-15A2.5 2.5 0 016.5 2H19a1 1 0 011 1v18a1 1 0 01-1 1H6.5a1 1 0 010-5H20" /></svg></span><b>單本完結小說</b><small>5 本一本就結束的小說</small></a>
+      </div>
+    </section>
+    <section class="hero latest" aria-labelledby="latest-h">
+      <h2 id="latest-h">最新心得</h2>
       <label class="sr-only" for="search">搜尋心得</label>
       <input id="search" type="search" placeholder="搜尋書名、作者或關鍵字…" autocomplete="off">
       <div id="chips" class="chips" role="group" aria-label="分類篩選"></div>
@@ -53,6 +78,6 @@
     <p class="copyright">© 2026 書頁筆記 · <a href="about.html#privacy">隱私說明</a></p>
   </div></footer>
   <script src="data/reviews.js"></script>
-  <script src="assets/app.js?v=20261003"></script>
+  <script src="assets/app.js?v=20261003b"></script>
 </body>
 </html>
