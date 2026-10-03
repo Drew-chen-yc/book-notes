@@ -70,15 +70,18 @@
       new URLSearchParams(location.search).get('id') || location.hash.replace('#', '') || null;
   }
 
+  function genreKey(r) { return ({ '仙俠': 'xian', '玄幻': 'xuan', '奇幻': 'fantasy', '科幻': 'scifi', '推理': 'mystery', '文學': 'lit' })[r.subcategory] || 'plain'; }
+  /* 評分印章：全站同一顆，size = xs（行內）／sm（卡片）／lg（心得頁） */
+  function seal(n, size) { return '<span class="seal seal-' + size + '" role="img" aria-label="' + n + ' 顆星">' + n + '<i aria-hidden="true">★</i></span>'; }
   function cover(r, size) {
-    return '<div class="cover cover-' + size + '" style="--c:' + r.color + '" aria-hidden="true">' +
-      '<span>' + esc(r.title) + '</span><small>' + esc(r.author) + '</small></div>';
+    return '<div class="cover cover-' + size + '" data-g="' + genreKey(r) + '" style="--c:' + r.color + '" aria-hidden="true">' +
+      '<em>' + esc(r.subcategory || r.category) + '</em><span>' + esc(r.title) + '</span><small>' + esc(r.author) + '</small></div>';
   }
   function card(r, listName, pos) {
     return '<a class="card" href="' + reviewHref(r.id) + '" data-id="' + r.id +
       '" data-list="' + listName + '" data-pos="' + pos + '">' + cover(r, 'sm') +
       '<div class="card-body"><span class="tag">' + esc(catLabel(r)) + '</span>' +
-      '<h3>' + esc(r.title) + '</h3><p class="meta">' + esc(r.author) + ' · <span class="stars" aria-label="' + r.rating + ' 顆星">' + stars(r.rating) + '</span></p>' +
+      seal(r.rating, 'sm') + '<h3>' + esc(r.title) + '</h3><p class="meta">' + esc(r.author) + '</p>' +
       '<p>' + esc(r.summary) + '</p><p class="meta">' + r.date + ' · 約 ' + readMinutes(r) + ' 分鐘</p></div></a>';
   }
 
@@ -123,6 +126,18 @@
     }
     render();
     bindCardClicks(list);
+
+    /* 借書卡：首頁主視覺，列出最近上架的 5 本（list_name = home_card） */
+    var loan = $('#loan-card');
+    if (loan) {
+      loan.innerHTML = '<div class="loan-head"><b>借書卡</b><span>最近讀完</span></div><ol>' +
+        REVIEWS.slice(0, 5).map(function (r, i) {
+          return '<li><a href="' + reviewHref(r.id) + '" data-id="' + r.id + '" data-list="home_card" data-pos="' + (i + 1) + '">' +
+            '<time datetime="' + r.date + '">' + r.date.slice(5).replace('-', '.') + '</time>' +
+            '<span class="loan-title">' + esc(r.title) + '<small>' + esc(r.subcategory || r.category) + '</small></span>' + seal(r.rating, 'xs') + '</a></li>';
+        }).join('') + '</ol><a class="loan-more" href="books.html">看全部 ' + REVIEWS.length + ' 本 →</a>';
+      bindCardClicks(loan);
+    }
 
     chips.addEventListener('click', function (e) {
       var b = e.target.closest('.chip');
@@ -196,7 +211,7 @@
       (r.subcategory ? ' / <a href="index.html?cat=' + encodeURIComponent(r.category) + '&sub=' + encodeURIComponent(r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>' +
       '<header class="review-head">' + cover(r, 'lg') +
       '<div><span class="tag">' + esc(catLabel(r)) + '</span><h1>' + esc(seoH1(r)) + '</h1>' +
-      '<p class="meta">' + esc(r.author) + '</p><p class="stars big" aria-label="' + r.rating + ' 顆星">' + stars(r.rating) + '</p>' +
+      '<p class="meta">' + esc(r.author) + '</p><p class="rating">' + seal(r.rating, 'lg') + '<span class="stars big" aria-hidden="true">' + stars(r.rating) + '</span></p>' +
       '<p class="meta">' + r.date + ' · 約 ' + readMinutes(r) + ' 分鐘閱讀</p>' +
       '<p class="intro">' + esc(seoIntro(r)) + '</p>' +
       '<p class="lead">' + esc(r.summary) + '</p></div></header>' +
