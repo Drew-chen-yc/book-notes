@@ -48,7 +48,7 @@ function buildSite(REVIEWS, opts) {
     '        <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>',
     '        <label class="sr-only" for="interest">感興趣的分類</label>',
     '        <select id="interest" name="interest">',
-    '          <option value="all">全部分類</option><option value="自我成長">自我成長</option><option value="心理學">心理學</option><option value="歷史">歷史</option><option value="投資理財">投資理財</option>',
+    '          <option value="all">全部分類</option><option value="小說">小說</option><option value="自我成長">自我成長</option><option value="心理學">心理學</option><option value="人文社科">人文社科</option><option value="歷史">歷史</option><option value="投資理財">投資理財</option>',
     '        </select>',
     '        <button class="btn" type="submit">訂閱</button>',
     '      </div>',
@@ -57,7 +57,7 @@ function buildSite(REVIEWS, opts) {
     '    <p class="copyright">© 2026 書頁筆記 · <a href="about.html#privacy">隱私說明</a></p>',
     '  </div></footer>',
     '  <script src="data/reviews.js"></script>',
-    '  <script src="assets/app.js"></script>',
+    '  <script src="assets/app.js?v=20261003"></script>',
     '</body>',
     '</html>',
     ''
@@ -66,6 +66,13 @@ function buildSite(REVIEWS, opts) {
   /* 書單文（data/reviews.js 的 window.LISTS）與總表頁共用的小工具 */
   var LISTS = (opts && opts.lists) || [];
   function byId(id) { for (var i = 0; i < REVIEWS.length; i++) if (REVIEWS[i].id === id) return REVIEWS[i]; return null; }
+  function genreKey(r) { return ({ '仙俠': 'xian', '玄幻': 'xuan', '奇幻': 'fantasy', '科幻': 'scifi', '推理': 'mystery', '文學': 'lit' })[r.subcategory] || 'plain'; }
+  /* 評分印章：全站同一顆，size = xs（行內）／sm（卡片）／lg（心得頁） */
+  function seal(n, size) { return '<span class="seal seal-' + size + '" role="img" aria-label="' + n + ' 顆星">' + n + '<i aria-hidden="true">★</i></span>'; }
+  function cover(r, size) {
+    return '<div class="cover cover-' + size + '" data-g="' + genreKey(r) + '" style="--c:' + r.color + '" aria-hidden="true">' +
+      '<em>' + esc(r.subcategory || r.category) + '</em><span>' + esc(r.title) + '</span><small>' + esc(r.author) + '</small></div>';
+  }
   function catLabel(r) { return r.category + (r.subcategory ? '・' + r.subcategory : ''); }
   function para(p) { return '    <p>' + esc(p) + '</p>'; }
   function listLink(l) { return '<a href="' + esc(l.id) + '.html">' + esc(l.title) + '</a>'; }
@@ -92,7 +99,7 @@ function buildSite(REVIEWS, opts) {
       '  <script src="assets/analytics.js"></script>',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261003">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -144,7 +151,7 @@ function buildSite(REVIEWS, opts) {
       '  <script src="assets/analytics.js"></script>',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261003">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -155,8 +162,9 @@ function buildSite(REVIEWS, opts) {
       '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="index.html?cat=' + encodeURIComponent(r.category) + '">' + esc(r.category) + '</a>' +
         (r.subcategory ? ' / <a href="index.html?cat=' + encodeURIComponent(r.category) + '&sub=' + encodeURIComponent(r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>',
       '    <header class="review-head">',
+      '      ' + cover(r, 'lg'),
       '      <div><span class="tag">' + esc(r.category + (r.subcategory ? '・' + r.subcategory : '')) + '</span><h1>' + esc(seoH1(r)) + '</h1>',
-      '      <p class="meta">' + esc(r.author) + '</p><p class="stars big" aria-label="' + r.rating + ' 顆星">' + stars(r.rating) + '</p>',
+      '      <p class="meta">' + esc(r.author) + '</p><p class="rating">' + seal(r.rating, 'lg') + '<span class="stars big" aria-hidden="true">' + stars(r.rating) + '</span></p>',
       '      <p class="meta">' + r.date + '</p>',
       '      <p class="intro">' + esc(intro) + '</p>',
       '      <p class="lead">' + esc(r.summary) + '</p></div>',
@@ -188,7 +196,7 @@ function buildSite(REVIEWS, opts) {
       '    <table class="books"><thead><tr><th>書名</th><th>類型</th><th>評分</th><th>一句話</th></tr></thead><tbody>',
       sorted.map(function (r, i) {
         return '      <tr><td><a href="' + esc(r.id) + '.html" data-id="' + esc(r.id) + '" data-list="all_books" data-pos="' + (i + 1) + '">《' + esc(r.title) + '》</a><br><small>' + esc(r.author) + '</small></td>' +
-          '<td>' + esc(catLabel(r)) + '</td><td>' + r.rating + '</td><td>' + esc(r.summary.split('。')[0] + '。') + '</td></tr>';
+          '<td>' + esc(catLabel(r)) + '</td><td>' + seal(r.rating, 'xs') + '</td><td>' + esc(r.summary.split('。')[0] + '。') + '</td></tr>';
       }).join('\n'),
       '    </tbody></table>'
     ].join('\n')
@@ -210,7 +218,7 @@ function buildSite(REVIEWS, opts) {
             if (!r) throw new Error('書單 ' + l.id + ' 找不到心得 ' + it.id);
             pos += 1;
             return '    <div class="pick"><h3><a href="' + esc(r.id) + '.html" data-id="' + esc(r.id) + '" data-list="list_' + esc(l.id) + '" data-pos="' + pos + '">《' + esc(r.title) + '》</a> ' +
-              '<span class="stars" aria-label="' + r.rating + ' 顆星">' + stars(r.rating) + '</span></h3>' +
+              seal(r.rating, 'xs') + '</h3>' +
               '<p class="meta">' + esc(r.author) + ' · ' + esc(catLabel(r)) + '</p><p>' + esc(it.note) + '</p></div>';
           })).join('\n');
         }).join('\n'),
