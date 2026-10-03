@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="zh-Hant-TW" data-page-type="review" data-content-group="心得內頁">
+<html lang="zh-Hant-TW" data-page-type="reviews" data-content-group="心得列表">
 <head>
   <meta charset="utf-8">
-  <script>/* 舊網址 review.html?id=xxx 導向新的靜態頁 xxx.html */(function(){var m=location.search.match(/[?&]id=([\w-]+)/);if(m)location.replace(m[1]+'.html'+location.hash);})();</script>
-  <meta name="robots" content="noindex">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>讀書心得｜書頁筆記</title>
-  <meta name="description" content="讀書心得">
-  <meta property="og:title" content="讀書心得｜書頁筆記">
-  <meta property="og:description" content="讀書心得">
+  <title>全部心得：小說與好書的讀書心得列表｜書頁筆記</title>
+  <meta name="description" content="書頁筆記的全部讀書心得，可以搜尋書名、作者，或依分類與小說子分類篩選。">
+  <meta property="og:title" content="全部心得｜書頁筆記">
+  <meta property="og:description" content="書頁筆記的全部讀書心得，可以搜尋書名、作者，或依分類與小說子分類篩選。">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://drew-chen-yc.github.io/book-notes/reviews.html">
+  <link rel="canonical" href="https://drew-chen-yc.github.io/book-notes/reviews.html">
   <!-- 追蹤程式必須最先載入：Consent 預設值 → dataLayer 脈絡 → GTM -->
   <script src="assets/analytics.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,7 +21,20 @@
     <a class="logo" href="index.html">書頁筆記</a>
     <nav><a href="reviews.html">心得</a><a href="lists.html">書單</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>
   </div></header>
-  <main class="wrap narrow" id="review"></main>
+  <main class="wrap">
+    <section class="hero latest page-head" id="list-top">
+      <nav class="crumb"><a href="index.html">首頁</a> / 心得</nav>
+      <h1>全部心得</h1>
+      <label class="sr-only" for="search">搜尋心得</label>
+      <input id="search" type="search" placeholder="搜尋書名、作者或關鍵字…" autocomplete="off">
+      <div id="chips" class="chips" role="group" aria-label="分類篩選"></div>
+    </section>
+    <section aria-label="心得列表">
+      <div id="review-list" class="grid"></div>
+      <p id="empty" class="empty" hidden>沒有符合的心得，換個關鍵字試試。</p>
+      <nav id="pager" class="pager" aria-label="分頁" hidden></nav>
+    </section>
+  </main>
   <footer class="site-footer"><div class="wrap">
     <form id="newsletter" novalidate>
       <h2>每月一封新心得</h2>
