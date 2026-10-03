@@ -44,6 +44,9 @@
     var ls = (window.LISTS || []).filter(function (l) { return l.sections.some(function (s) { return (s.items || []).some(function (it) { return it.id === r.id; }); }); });
     return !ls.length ? '' : '<p class="meta in-lists">收錄在：' + ls.map(function (l) { return '<a href="' + esc(l.id) + '.html">' + esc(l.title) + '</a>'; }).join('、') + '</p>';
   }
+  /* 圖示：Lucide（ISC 授權）。全站不使用 emoji */
+  var ICO_HEART = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /></svg>', ICO_HEART_ON = '<svg class="ico" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /></svg>', ICO_CHECK = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>';
+  function likeLabel(on) { return (on ? ICO_HEART_ON + ' 已收藏' : ICO_HEART + ' 收藏這篇'); }
   function stars(n) { var f = Math.floor(n), h = n > f ? 1 : 0; return '★★★★★'.slice(0, f) + (h ? '<span class="star-half">☆</span>' : '') + '☆☆☆☆☆'.slice(0, 5 - f - h); }
   function readMinutes(r) { return Math.max(1, Math.round(r.body.join('').length / 400)); }
   function reviewParams(r) {
@@ -127,17 +130,10 @@
     render();
     bindCardClicks(list);
 
-    /* 借書卡：首頁主視覺，列出最近上架的 5 本（list_name = home_card） */
-    var loan = $('#loan-card');
-    if (loan) {
-      loan.innerHTML = '<div class="loan-head"><b>借書卡</b><span>最近讀完</span></div><ol>' +
-        REVIEWS.slice(0, 5).map(function (r, i) {
-          return '<li><a href="' + reviewHref(r.id) + '" data-id="' + r.id + '" data-list="home_card" data-pos="' + (i + 1) + '">' +
-            '<time datetime="' + r.date + '">' + r.date.slice(5).replace('-', '.') + '</time>' +
-            '<span class="loan-title">' + esc(r.title) + '<small>' + esc(r.subcategory || r.category) + '</small></span>' + seal(r.rating, 'xs') + '</a></li>';
-        }).join('') + '</ol><a class="loan-more" href="books.html">看全部 ' + REVIEWS.length + ' 本 →</a>';
-      bindCardClicks(loan);
-    }
+    /* 首頁第一屏與入口卡片上的數字跟著資料走 */
+    document.querySelectorAll('[data-count]').forEach(function (el) {
+      el.textContent = el.dataset.count === 'lists' ? (window.LISTS || []).length : REVIEWS.length;
+    });
 
     chips.addEventListener('click', function (e) {
       var b = e.target.closest('.chip');
@@ -218,7 +214,7 @@
       '<article id="article">' + bodyHtml(r.body).join('') +
       '<p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p></article>' +
       '<section class="actions" aria-label="互動">' +
-      '<button type="button" id="like" class="btn btn-ghost" aria-pressed="' + liked + '">' + (liked ? '♥ 已收藏' : '♡ 收藏這篇') + '</button>' +
+      '<button type="button" id="like" class="btn btn-ghost" aria-pressed="' + liked + '">' + likeLabel(liked) + '</button>' +
       '<span class="share-label">分享：</span>' +
       '<button type="button" class="btn btn-ghost" data-share="line">LINE</button>' +
       '<button type="button" class="btn btn-ghost" data-share="facebook">Facebook</button>' +
@@ -238,7 +234,7 @@
       liked = !liked;
       safeSet('bn_like_' + r.id, liked ? '1' : '0');
       this.setAttribute('aria-pressed', liked);
-      this.textContent = liked ? '♥ 已收藏' : '♡ 收藏這篇';
+      this.innerHTML = likeLabel(liked);
       track('like_review', Object.assign({}, base, { like_action: liked ? 'like' : 'unlike' }));
     });
 
@@ -254,7 +250,7 @@
       if (method === 'line') window.open('https://social-plugins.line.me/lineit/share?url=' + u, '_blank', 'noopener');
       if (method === 'facebook') window.open('https://www.facebook.com/sharer/sharer.php?u=' + u, '_blank', 'noopener');
       if (method === 'copy_link') {
-        var done = function () { b.textContent = '已複製 ✓'; setTimeout(function () { b.textContent = '複製連結'; }, 1500); };
+        var done = function () { b.innerHTML = '已複製 ' + ICO_CHECK; setTimeout(function () { b.textContent = '複製連結'; }, 1500); };
         if (navigator.clipboard) navigator.clipboard.writeText(decodeURIComponent(u)).then(done, done); else done();
       }
     });
@@ -331,7 +327,7 @@
       var btn = f.querySelector('button[type=submit]');
       sending = true; btn.disabled = true; msg.textContent = '送出中…';
       sendToForm(email, interest, '訂閱').then(function () {
-        // ⚠ 只送「有人訂閱」這件事進 GA，不含 Email
+        // 注意：只送「有人訂閱」這件事進 GA，不含 Email
         track('generate_lead', { form_location: loc, lead_type: 'newsletter', interest_category: interest });
         f.innerHTML = '<p class="form-msg ok">訂閱成功！有新心得時會寄信通知你。</p>';
       }).catch(function () {
