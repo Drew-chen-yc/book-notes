@@ -54,6 +54,14 @@
     if (r.subcategory) p.book_subcategory = r.subcategory;
     return p;
   }
+  /* 分類頁網址：cat-<分類>.html、cat-<分類>-<子分類>.html（build/seo-build.js 與 assets/app.js 各有一份，要同步） */
+  var CAT_SLUG = { '小說': 'novel', '自我成長': 'self-growth', '心理學': 'psychology', '人文社科': 'humanities', '歷史': 'history', '投資理財': 'investing' };
+  var SUB_SLUG = { '仙俠': 'xianxia', '玄幻': 'xuanhuan', '奇幻': 'fantasy', '科幻': 'scifi', '推理': 'mystery', '文學': 'literary', '歷史': 'historical', '愛情': 'romance', '翻譯': 'translated', '其他': 'other' };
+  function catHref(cat, sub) { return 'cat-' + CAT_SLUG[cat] + (sub ? '-' + SUB_SLUG[sub] : '') + '.html'; }
+  function catName(cat, sub) { return sub ? sub + cat : cat; }
+  function countOf(cat, sub) { return REVIEWS.filter(function (r) { return r.category === cat && (!sub || r.subcategory === sub); }).length; }
+  function liveCats() { return (window.CATEGORIES || []).filter(function (c) { return countOf(c) > 0; }).sort(function (x, y) { return countOf(y) - countOf(x); }); }   // 篇數多的排前面
+  function liveSubs(cat) { return ((window.SUBCATEGORIES || {})[cat] || []).filter(function (x) { return countOf(cat, x) > 0; }); }
   /* 分類顯示：有子分類時顯示「小說・仙俠」 */
   var SUBS = window.SUBCATEGORIES || {};
   function catLabel(r) { return r.category + (r.subcategory ? '・' + r.subcategory : ''); }
@@ -131,8 +139,8 @@
     subchips.setAttribute('role', 'group'); subchips.setAttribute('aria-label', '子分類篩選');
     chips.parentNode.insertBefore(subchips, chips.nextSibling);
 
-    chips.innerHTML = ['全部'].concat(window.CATEGORIES).map(function (c) {
-      return '<button type="button" class="chip' + (c === '全部' ? ' active' : '') + '" data-cat="' + c + '">' + c + '</button>';
+    chips.innerHTML = ['全部'].concat(liveCats()).map(function (c) {
+      return '<button type="button" class="chip' + (c === '全部' ? ' active' : '') + '" data-cat="' + c + '">' + c + ' <small>' + (c === '全部' ? REVIEWS.length : countOf(c)) + '</small></button>';
     }).join('');
 
     function filtered() {
@@ -186,10 +194,10 @@
 
     /* 子分類：選到有子分類的分類（例如小說）時，才出現第二排標籤 */
     function renderSubchips() {
-      var subs = SUBS[state.cat];
+      var subs = SUBS[state.cat] && liveSubs(state.cat);
       subchips.hidden = !subs;
       subchips.innerHTML = !subs ? '' : ['全部'].concat(subs).map(function (s) {
-        return '<button type="button" class="chip chip-sub' + (s === state.sub ? ' active' : '') + '" data-sub="' + s + '">' + s + '</button>';
+        return '<button type="button" class="chip chip-sub' + (s === state.sub ? ' active' : '') + '" data-sub="' + s + '">' + s + (s === '全部' ? '' : ' <small>' + countOf(state.cat, s) + '</small>') + '</button>';
       }).join('');
     }
     subchips.addEventListener('click', function (e) {
@@ -241,8 +249,8 @@
     var liked = safeGet('bn_like_' + r.id) === '1';
 
     main.innerHTML =
-      '<nav class="crumb"><a href="index.html">首頁</a> / <a href="reviews.html?cat=' + encodeURIComponent(r.category) + '">' + esc(r.category) + '</a>' +
-      (r.subcategory ? ' / <a href="reviews.html?cat=' + encodeURIComponent(r.category) + '&sub=' + encodeURIComponent(r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>' +
+      '<nav class="crumb"><a href="index.html">首頁</a> / <a href="reviews.html">心得</a> / <a href="' + catHref(r.category) + '">' + esc(r.category) + '</a>' +
+      (r.subcategory ? ' / <a href="' + catHref(r.category, r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>' +
       '<header class="review-head">' + cover(r, 'lg') +
       '<div><span class="tag">' + esc(catLabel(r)) + '</span><h1>' + esc(seoH1(r)) + '</h1>' +
       '<p class="meta">' + esc(r.author) + '</p><p class="rating">' + seal(r.rating, 'lg') + '<span class="stars big" aria-hidden="true">' + stars(r.rating) + '</span></p>' +
@@ -408,7 +416,43 @@
   if (page === 'home') initHome();
   if (page === 'reviews') { initReviewsList(); applyCatParam(); }
   if (page === 'review') initReview();
-  if (page === 'list' || page === 'books') bindCardClicks($('main'));   // 書單與總表的連結也送 select_content
+  if (page === 'list' || page === 'books' || page === 'category') bindCardClicks($('main'));
+
+  /* 導覽列下拉選單與頁尾網站地圖：全站共用，依資料產生（只列有心得的分類） */
+  function initSiteNav() {
+    var link = document.querySelector('.site-header nav a[href="reviews.html"]');
+    if (link) {
+      var dd = document.createElement('div');
+      dd.className = 'dd';
+      link.parentNode.insertBefore(dd, link);
+      dd.appendChild(link);
+      link.setAttribute('aria-haspopup', 'true');
+      var menu = document.createElement('div');
+      menu.className = 'dd-menu';
+      menu.innerHTML = '<a href="reviews.html"><b>全部心得</b><small>' + REVIEWS.length + '</small></a>' + liveCats().map(function (c) {
+        return '<a href="' + catHref(c) + '"><b>' + esc(c) + '</b><small>' + countOf(c) + '</small></a>' + liveSubs(c).map(function (x) {
+          return '<a class="dd-sub" href="' + catHref(c, x) + '">' + esc(x) + '<small>' + countOf(c, x) + '</small></a>';
+        }).join('');
+      }).join('');
+      dd.appendChild(menu);
+    }
+    var foot = document.querySelector('.site-footer .copyright');
+    if (foot) {
+      var col = function (title, links) { return '<div><h3>' + title + '</h3>' + links.join('') + '</div>'; };
+      var a = function (href, text) { return '<a href="' + href + '">' + esc(text) + '</a>'; };
+      var map = document.createElement('nav');
+      map.className = 'sitemap'; map.setAttribute('aria-label', '網站地圖');
+      map.innerHTML =
+        col('分類', liveCats().map(function (c) { return a(catHref(c), c + '（' + countOf(c) + '）'); })) +
+        liveCats().filter(function (c) { return liveSubs(c).length; }).map(function (c) {
+          return col(esc(c) + '類型', liveSubs(c).map(function (x) { return a(catHref(c, x), x + '（' + countOf(c, x) + '）'); }));
+        }).join('') +
+        col('書單', (window.LISTS || []).map(function (l) { return a(l.id + '.html', l.title); })) +
+        col('網站', [a('index.html', '首頁'), a('reviews.html', '全部心得'), a('lists.html', '書單總覽'), a('books.html', '全部的書（總表）'), a('about.html', '關於')]);
+      foot.parentNode.insertBefore(map, foot);
+    }
+  }
+  initSiteNav();   // 書單與總表的連結也送 select_content
   initNewsletter();
   initUnsubscribe();
 })();
