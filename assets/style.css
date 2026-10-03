@@ -189,13 +189,13 @@ h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; }
 
 /* ===== 設計稿 v2：淡藍色系（大圓角色塊、膠囊按鈕、無框線） ===== */
 :root { --bg: #f4f9fd; --surface: #ffffff; --text: #1f3344; --muted: #5b7183; --line: #dbe9f3; --accent: #1f6fa8; --accent-ink: #fff;
-  --chip: #e4f1fa; --star: #b26a00; --panel: #e4f1fa; --sky: #bfe3f8; --sky-2: #8ccbef; --blue: #4fa3db; --ink: #1f3344; --sun: #ffd666; --star-bg: #fff3d1;
+  --chip: #e4f1fa; --star: #86560f; --panel: #e4f1fa; --sky: #bfe3f8; --sky-2: #8ccbef; --blue: #4fa3db; --ink: #1f3344; --sun: #c59140; --star-bg: #f6ead2;
   --font-display: "Noto Sans TC", -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif; --radius: 14px;
   --shadow: 0 2px 4px rgba(31,51,68,.04), 0 10px 28px rgba(31,111,168,.09); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0f1a24; --surface: #172633; --text: #e3edf5; --muted: #9db2c3; --line: #263a4b; --accent: #8ccbef; --accent-ink: #0f1a24;
-  --chip: #1d3040; --star: #ffd666; --panel: #172f42; --sky: #1f4660; --sky-2: #2f6a90; --blue: #4fa3db; --ink: #0b141c; --sun: #ffd666; --star-bg: #3a3216; --shadow: none; } }
+  --chip: #1d3040; --star: #e0aa55; --panel: #172f42; --sky: #1f4660; --sky-2: #2f6a90; --blue: #4fa3db; --ink: #0b141c; --sun: #e0aa55; --star-bg: #3a2f1a; --shadow: none; } }
 :root[data-theme="dark"] { --bg: #0f1a24; --surface: #172633; --text: #e3edf5; --muted: #9db2c3; --line: #263a4b; --accent: #8ccbef; --accent-ink: #0f1a24;
-  --chip: #1d3040; --star: #ffd666; --panel: #172f42; --sky: #1f4660; --sky-2: #2f6a90; --blue: #4fa3db; --ink: #0b141c; --sun: #ffd666; --star-bg: #3a3216; --shadow: none; }
+  --chip: #1d3040; --star: #e0aa55; --panel: #172f42; --sky: #1f4660; --sky-2: #2f6a90; --blue: #4fa3db; --ink: #0b141c; --sun: #e0aa55; --star-bg: #3a2f1a; --shadow: none; }
 body { font-size: 18px; line-height: 1.8; }
 .wrap { max-width: 1080px; padding: 0 20px; }
 .narrow { max-width: 760px; }
@@ -264,7 +264,7 @@ input[type=search], input[type=email], select { border-radius: 999px; padding: 1
 .seal-lg i { font-size: 18px; margin: 0; }
 .seal-xs { width: auto; height: auto; padding: 1px 10px; font-size: 14px; }
 .seal-xs i { display: inline; font-size: 12px; }
-.stars { color: #e0a020; }
+.stars { color: var(--sun); }
 
 /* 心得頁 */
 .review-head { border: 0; border-radius: 28px; background: var(--panel); box-shadow: none; padding: 28px; }
