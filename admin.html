@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>心得後台｜書頁筆記</title>
+  <title>心得後台｜折角 Dogeared</title>
   <!-- 後台不載入 analytics.js：不追蹤自己的操作，也不讓第三方程式碰到 token -->
   <link rel="stylesheet" href="assets/style.css">
   <style>
@@ -36,7 +36,7 @@
 </head>
 <body>
   <header class="site-header"><div class="wrap">
-    <a class="logo" href="index.html">書頁筆記</a>
+    <a class="logo" href="index.html">折角<span>Dogeared</span></a>
     <nav><a href="index.html" target="_blank" rel="noopener">看網站 ↗</a></nav>
   </div></header>
 
@@ -262,7 +262,7 @@
     bh.textContent = r.body.length + ' 段、' + bl + ' 字，約 ' + Math.max(1, Math.round(bl / 400)) + ' 分鐘閱讀' + (bl < 1500 ? '：建議 1,500 字以上，比較容易被搜尋到' : '：篇幅足夠');
     bh.className = 'hint ' + (bl >= 1500 ? 'ok' : 'warn');
     $('seo-url').textContent = SITE.replace('https://', '') + (r.id || '…') + '.html';
-    $('seo-title').textContent = '《' + (r.title || '書名') + '》' + (r.category === '小說' ? '心得與評價：好看嗎？' : '讀書心得與評價：值得讀嗎？') + '｜書頁筆記';
+    $('seo-title').textContent = '《' + (r.title || '書名') + '》' + (r.category === '小說' ? '心得與評價：好看嗎？' : '讀書心得與評價：值得讀嗎？') + '｜折角 Dogeared';
     $('seo-desc').textContent = r.summary || '（摘要會顯示在這裡）';
     var stars = (function (n) { var f = Math.floor(n), h = n > f ? 1 : 0; return '★★★★★'.slice(0, f) + (h ? '<span class="star-half">☆</span>' : '') + '☆☆☆☆☆'.slice(0, 5 - f - h); })(r.rating);
     var blocks = [], li = [];

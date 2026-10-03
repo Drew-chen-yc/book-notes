@@ -1,4 +1,4 @@
-# 書頁筆記 — 讀書心得網站（含 GA4 行為追蹤）
+# 折角 Dogeared — 讀書心得網站（含 GA4 行為追蹤）
 
 純靜態網站，部署在 GitHub Pages。追蹤架構：**網站推 dataLayer → GTM → GA4 / 廣告平台**。
 
