@@ -28,7 +28,7 @@
   /* SEO 用字：標題、H1、開頭第一句都對準「書名＋心得／評價／好看嗎」這類搜尋字詞 */
   function seoAsk(r) { return r.category === '小說' ? '好看嗎' : '值得讀嗎'; }
   function seoH1(r) { return '《' + r.title + '》' + (r.category === '小說' ? '心得與評價' : '讀書心得與評價'); }
-  function seoTitle(r) { return seoH1(r) + '：' + seoAsk(r) + '？｜書頁筆記'; }
+  function seoTitle(r) { return seoH1(r) + '：' + seoAsk(r) + '？｜折角 Dogeared'; }
   function seoIntro(r) {
     return '《' + r.title + '》' + seoAsk(r) + '？這篇是我讀完' + (/^[A-Za-z]/.test(r.author) ? ' ' : '') + r.author +
       (r.category === '小說' ? '這部' + (r.subcategory || '') + '小說' : '這本書') + '之後寫的心得與評價，給 ' + r.rating + ' 顆星。';
@@ -384,6 +384,64 @@
     });
   }
 
+  /* ================= 回饋表單（feedback.html） =================
+   * 內容送到站長的另一張 Google 表單，GA 只記「有人送出、哪一種」，不含任何留言內容。 */
+  var FEEDBACK = {
+    url: 'https://docs.google.com/forms/d/e/1FAIpQLSd3ak-caP-oa58mzXcgZ3FTmRZLhFqs-YKPsgIh9bhX22UzqQ/formResponse',
+    type: 'entry.1712395485', book: 'entry.1969115601', author: 'entry.1325602357', message: 'entry.2000198279',
+    name: 'entry.1055032485', email: 'entry.1077421570', source: 'entry.1043682175'
+  };
+  function initFeedback() {
+    var f = $('#feedback');
+    if (!f) return;
+    var msg = f.querySelector('.form-msg'), started = false, sending = false;
+    var LABEL = { '推薦好書': '為什麼推薦', '網站意見': '想說的話', '內容更正': '哪一篇、哪裡有誤' };
+    function curType() { return f.querySelector('input[name=type]:checked').value; }
+    function syncType() {
+      var t = curType();
+      f.querySelectorAll('[data-for]').forEach(function (el) { el.hidden = el.dataset.for !== t; });
+      $('#fb-msg-label').textContent = LABEL[t];
+    }
+    f.querySelectorAll('input[name=type]').forEach(function (r) { r.addEventListener('change', syncType); });
+    var pre = new URLSearchParams(location.search).get('type');   // 例：feedback.html?type=內容更正
+    if (pre) { var el = Array.prototype.filter.call(f.querySelectorAll('input[name=type]'), function (r) { return r.value === pre; })[0]; if (el) el.checked = true; }
+    syncType();
+    f.message.addEventListener('input', function () { $('#fb-n').textContent = f.message.value.length; });
+    var trap = document.createElement('input');
+    trap.type = 'text'; trap.name = 'website'; trap.tabIndex = -1; trap.autocomplete = 'off';
+    trap.setAttribute('aria-hidden', 'true'); trap.className = 'sr-only';
+    f.appendChild(trap);
+    f.addEventListener('focusin', function () {
+      if (started) return;
+      started = true;
+      track('feedback_start', { form_location: 'feedback' });
+    });
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (sending) return;
+      var t = curType(), text = f.message.value.trim(), email = f.email.value.trim();
+      var err = t === '推薦好書' && !f.book.value.trim() ? '請填書名' : text.length < 5 ? '內容太短，請多寫幾個字' : email && !validEmail(email) ? 'Email 格式不正確' : '';
+      if (err) { msg.textContent = err; track('feedback_error', { form_location: 'feedback', error_type: 'validation' }); return; }
+      var done = function () {
+        track('submit_feedback', { form_location: 'feedback', feedback_type: t, has_email: email ? 'yes' : 'no' });
+        f.innerHTML = '<p class="form-msg ok">已送出，謝謝你。</p><p><a class="more" href="reviews.html">回心得列表</a></p>';
+      };
+      if (trap.value) { done(); return; }
+      if (!FEEDBACK.url) { msg.textContent = '回饋表單尚未開放。'; return; }
+      var body = new URLSearchParams();
+      body.append(FEEDBACK.type, t); body.append(FEEDBACK.book, f.book.value.trim()); body.append(FEEDBACK.author, f.author.value.trim());
+      body.append(FEEDBACK.message, text); body.append(FEEDBACK.name, f.name.value.trim()); body.append(FEEDBACK.email, email);
+      body.append(FEEDBACK.source, document.referrer ? document.referrer.replace(/^https?:\/\/[^/]+/, '').slice(0, 120) : '');
+      var btn = f.querySelector('button[type=submit]');
+      sending = true; btn.disabled = true; msg.textContent = '送出中…';
+      fetch(FEEDBACK.url, { method: 'POST', mode: 'no-cors', body: body }).then(done).catch(function () {
+        sending = false; btn.disabled = false;
+        msg.textContent = '送出失敗，請檢查網路後再試一次。';
+        track('feedback_error', { form_location: 'feedback', error_type: 'network' });
+      });
+    });
+  }
+
   /* 取消訂閱（關於頁） */
   function initUnsubscribe() {
     var f = $('#unsubscribe');
@@ -448,11 +506,12 @@
           return col(esc(c) + '類型', liveSubs(c).map(function (x) { return a(catHref(c, x), x + '（' + countOf(c, x) + '）'); }));
         }).join('') +
         col('書單', (window.LISTS || []).map(function (l) { return a(l.id + '.html', l.title); })) +
-        col('網站', [a('index.html', '首頁'), a('reviews.html', '全部心得'), a('lists.html', '書單總覽'), a('books.html', '全部的書（總表）'), a('about.html', '關於')]);
+        col('網站', [a('index.html', '首頁'), a('reviews.html', '全部心得'), a('lists.html', '書單總覽'), a('books.html', '全部的書（總表）'), a('feedback.html', '推薦好書／意見回饋'), a('about.html', '關於')]);
       foot.parentNode.insertBefore(map, foot);
     }
   }
   initSiteNav();   // 書單與總表的連結也送 select_content
   initNewsletter();
   initUnsubscribe();
+  initFeedback();
 })();
