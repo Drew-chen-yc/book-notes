@@ -57,7 +57,7 @@ function buildSite(REVIEWS, opts) {
     '    <p class="copyright">© 2026 書頁筆記 · <a href="about.html#privacy">隱私說明</a></p>',
     '  </div></footer>',
     '  <script src="data/reviews.js"></script>',
-    '  <script src="assets/app.js?v=20261003c"></script>',
+    '  <script src="assets/app.js?v=20261003d"></script>',
     '</body>',
     '</html>',
     ''
@@ -72,6 +72,21 @@ function buildSite(REVIEWS, opts) {
   function cover(r, size) {
     return '<div class="cover cover-' + size + '" data-g="' + genreKey(r) + '" style="--c:' + r.color + '" aria-hidden="true">' +
       '<em>' + esc(r.subcategory || r.category) + '</em><span>' + esc(r.title) + '</span><small>' + esc(r.author) + '</small></div>';
+  }
+  /* 分類頁網址：cat-<分類>.html、cat-<分類>-<子分類>.html（build/seo-build.js 與 assets/app.js 各有一份，要同步） */
+  var CAT_SLUG = { '小說': 'novel', '自我成長': 'self-growth', '心理學': 'psychology', '人文社科': 'humanities', '歷史': 'history', '投資理財': 'investing' };
+  var SUB_SLUG = { '仙俠': 'xianxia', '玄幻': 'xuanhuan', '奇幻': 'fantasy', '科幻': 'scifi', '推理': 'mystery', '文學': 'literary', '歷史': 'historical', '愛情': 'romance', '翻譯': 'translated', '其他': 'other' };
+  function catHref(cat, sub) { return 'cat-' + CAT_SLUG[cat] + (sub ? '-' + SUB_SLUG[sub] : '') + '.html'; }
+  function catName(cat, sub) { return sub ? sub + cat : cat; }
+  function readMinutes(r) { return Math.max(1, Math.round(r.body.join('').length / 400)); }
+  function crumbOf(r) {   // 首頁 / 心得 / 分類 / 子分類
+    return '<nav class="crumb"><a href="index.html">首頁</a> / <a href="reviews.html">心得</a> / <a href="' + catHref(r.category) + '">' + esc(r.category) + '</a>' +
+      (r.subcategory ? ' / <a href="' + catHref(r.category, r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>';
+  }
+  function staticCard(r, listName, pos) {
+    return '<a class="card" href="' + esc(r.id) + '.html" data-id="' + esc(r.id) + '" data-list="' + listName + '" data-pos="' + pos + '">' + cover(r, 'sm') +
+      '<div class="card-body"><span class="tag">' + esc(catLabel(r)) + '</span>' + seal(r.rating, 'sm') + '<h3>' + esc(r.title) + '</h3><p class="meta">' + esc(r.author) + '</p>' +
+      '<p>' + esc(r.summary) + '</p><p class="meta">' + r.date + ' · 約 ' + readMinutes(r) + ' 分鐘</p></div></a>';
   }
   function catLabel(r) { return r.category + (r.subcategory ? '・' + r.subcategory : ''); }
   function para(p) { return '    <p>' + esc(p) + '</p>'; }
@@ -99,14 +114,14 @@ function buildSite(REVIEWS, opts) {
       '  <script src="assets/analytics.js"></script>',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261003c">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261003d">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
       '    <a class="logo" href="index.html">書頁筆記</a>',
       '    <nav><a href="reviews.html">心得</a><a href="lists.html">書單</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>',
       '  </div></header>',
-      '  <main class="wrap narrow listing">',
+      '  <main class="wrap ' + (o.wide ? '' : 'narrow ') + 'listing">',
       o.main,
       '  </main>',
       FOOT
@@ -151,7 +166,7 @@ function buildSite(REVIEWS, opts) {
       '  <script src="assets/analytics.js"></script>',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261003c">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261003d">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -159,8 +174,7 @@ function buildSite(REVIEWS, opts) {
       '    <nav><a href="reviews.html">心得</a><a href="lists.html">書單</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>',
       '  </div></header>',
       '  <main class="wrap narrow" id="review">',
-      '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="reviews.html?cat=' + encodeURIComponent(r.category) + '">' + esc(r.category) + '</a>' +
-        (r.subcategory ? ' / <a href="reviews.html?cat=' + encodeURIComponent(r.category) + '&sub=' + encodeURIComponent(r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>',
+      '    ' + crumbOf(r),
       '    <header class="review-head">',
       '      ' + cover(r, 'lg'),
       '      <div><span class="tag">' + esc(r.category + (r.subcategory ? '・' + r.subcategory : '')) + '</span><h1>' + esc(seoH1(r)) + '</h1>',
@@ -231,6 +245,43 @@ function buildSite(REVIEWS, opts) {
     });
   });
 
+  /* 分類頁與子分類頁：每個有心得的分類一頁，靜態輸出卡片 */
+  var catPages = [];
+  var cats = [], seen = {};
+  REVIEWS.forEach(function (r) {
+    if (!seen[r.category]) { seen[r.category] = { name: r.category, subs: [], subSeen: {} }; cats.push(seen[r.category]); }
+    var c = seen[r.category];
+    if (r.subcategory && !c.subSeen[r.subcategory]) { c.subSeen[r.subcategory] = 1; c.subs.push(r.subcategory); }
+  });
+  function buildCat(cat, sub, subs) {
+    var rows = REVIEWS.filter(function (r) { return r.category === cat && (!sub || r.subcategory === sub); });
+    var file = catHref(cat, sub), name = catName(cat, sub), slug = file.replace(/^cat-|\.html$/g, '');
+    catPages.push(file);
+    files[file] = shell({
+      file: file, type: 'category', group: '分類', wide: true,
+      title: name + '心得與評價：' + rows.length + ' 篇讀書心得',
+      desc: '書頁筆記的 ' + rows.length + ' 篇' + name + '心得與評價，每本附評分、一句話短評和完整心得。',
+      main: [
+        '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="reviews.html">心得</a>' + (sub ? ' / <a href="' + catHref(cat) + '">' + esc(cat) + '</a>' : '') + ' / ' + esc(sub || cat) + '</nav>',
+        '    <h1>' + esc(name) + '心得</h1>',
+        '    <p class="meta">共 ' + rows.length + ' 篇，滿分 5 顆星。</p>',
+        subs && subs.length ? '    <p class="chips cat-links"><a class="chip active" href="' + file + '">全部</a>' + subs.map(function (s) {
+          return '<a class="chip" href="' + catHref(cat, s) + '">' + esc(s) + '</a>';
+        }).join('') + '</p>' : '',
+        sub ? '    <p class="chips cat-links"><a class="chip" href="' + catHref(cat) + '">全部' + esc(cat) + '</a>' + seen[cat].subs.map(function (s) {
+          return '<a class="chip' + (s === sub ? ' active' : '') + '" href="' + catHref(cat, s) + '">' + esc(s) + '</a>';
+        }).join('') + '</p>' : '',
+        '    <div class="grid">',
+        rows.map(function (r, i) { return '      ' + staticCard(r, 'category_' + slug, i + 1); }).join('\n'),
+        '    </div>'
+      ].join('\n')
+    });
+  }
+  cats.forEach(function (c) {
+    buildCat(c.name, null, c.subs);
+    c.subs.forEach(function (s) { buildCat(c.name, s); });
+  });
+
   /* 書單總覽頁：列出所有書單 */
   files['lists.html'] = shell({
     file: 'lists.html', type: 'lists', group: '書單',
@@ -248,6 +299,7 @@ function buildSite(REVIEWS, opts) {
 
   var urls = [{ loc: BASE, lastmod: TODAY }, { loc: BASE + 'about.html', lastmod: TODAY }]
     .concat([{ loc: BASE + 'reviews.html', lastmod: TODAY }, { loc: BASE + 'lists.html', lastmod: TODAY }])
+    .concat(catPages.map(function (f) { return { loc: BASE + f, lastmod: TODAY }; }))
     .concat(REVIEWS.map(function (r) { return { loc: BASE + r.id + '.html', lastmod: r.date }; }))
     .concat([{ loc: BASE + 'books.html', lastmod: TODAY }])
     .concat(LISTS.map(function (l) { return { loc: BASE + l.id + '.html', lastmod: l.date }; }));
