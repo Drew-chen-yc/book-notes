@@ -99,10 +99,33 @@
     });
   }
 
-  /* ================= 首頁 ================= */
+  /* ================= 首頁：導覽用，只放最新 6 篇與書單 ================= */
   function initHome() {
+    document.querySelectorAll('[data-count]').forEach(function (el) {
+      var k = el.dataset.count;
+      el.textContent = k === 'lists' ? (window.LISTS || []).length :
+        k.indexOf('cat:') === 0 ? REVIEWS.filter(function (r) { return r.category === k.slice(4); }).length : REVIEWS.length;
+    });
+    var latest = $('#home-latest');
+    if (latest) {
+      latest.innerHTML = REVIEWS.slice(0, 6).map(function (r, i) { return card(r, 'home_latest', i + 1); }).join('');
+      bindCardClicks(latest);
+    }
+    var hl = $('#home-lists');
+    if (hl) {
+      hl.innerHTML = (window.LISTS || []).map(function (l) {
+        var n = l.sections.reduce(function (a, x) { return a + (x.items || []).length; }, 0);
+        return '<a class="list-card" href="' + esc(l.id) + '.html"><b>' + esc(l.title) + '</b><small>' + n + ' 本 · ' + esc(l.date) + '</small></a>';
+      }).join('');
+    }
+  }
+
+  /* ================= 心得列表頁：搜尋、分類、分頁 ================= */
+  var PER_PAGE = 9;
+  function initReviewsList() {
     var list = $('#review-list'), empty = $('#empty'), input = $('#search'), chips = $('#chips');
-    var state = { q: '', cat: '全部', sub: '全部' };
+    var state = { q: '', cat: '全部', sub: '全部', page: Math.max(1, parseInt(new URLSearchParams(location.search).get('page'), 10) || 1) };
+    var pager = $('#pager');
     var subchips = document.createElement('div');
     subchips.id = 'subchips'; subchips.className = 'chips subchips'; subchips.hidden = true;
     subchips.setAttribute('role', 'group'); subchips.setAttribute('aria-label', '子分類篩選');
@@ -123,22 +146,37 @@
     }
     function render() {
       var rows = filtered();
-      list.innerHTML = rows.map(function (r, i) { return card(r, 'home_latest', i + 1); }).join('');
+      var pages = Math.max(1, Math.ceil(rows.length / PER_PAGE));
+      state.page = Math.min(state.page, pages);
+      var start = (state.page - 1) * PER_PAGE;
+      list.innerHTML = rows.slice(start, start + PER_PAGE).map(function (r, i) { return card(r, 'reviews_list', start + i + 1); }).join('');
       empty.hidden = rows.length > 0;
+      pager.hidden = pages < 2;
+      pager.innerHTML = pages < 2 ? '' :
+        '<button type="button" class="pg" data-page="' + (state.page - 1) + '"' + (state.page === 1 ? ' disabled' : '') + '>上一頁</button>' +
+        Array.apply(null, Array(pages)).map(function (_, i) {
+          return '<button type="button" class="pg' + (i + 1 === state.page ? ' active' : '') + '" data-page="' + (i + 1) + '"' + (i + 1 === state.page ? ' aria-current="page"' : '') + '>' + (i + 1) + '</button>';
+        }).join('') +
+        '<button type="button" class="pg" data-page="' + (state.page + 1) + '"' + (state.page === pages ? ' disabled' : '') + '>下一頁</button>';
+      var u = new URL(location.href);   // 網址的 ?page= 跟著目前頁數走，重新整理或分享都停在同一頁
+      if (state.page > 1) u.searchParams.set('page', state.page); else u.searchParams.delete('page');
+      if (u.href !== location.href) history.replaceState(null, '', u);
       return rows.length;
     }
     render();
     bindCardClicks(list);
-
-    /* 首頁第一屏與入口卡片上的數字跟著資料走 */
-    document.querySelectorAll('[data-count]').forEach(function (el) {
-      el.textContent = el.dataset.count === 'lists' ? (window.LISTS || []).length : REVIEWS.length;
+    pager.addEventListener('click', function (e) {
+      var b = e.target.closest('.pg');
+      if (!b || b.disabled) return;
+      state.page = Number(b.dataset.page);
+      render();
+      $('#list-top').scrollIntoView({ block: 'start' });
     });
 
     chips.addEventListener('click', function (e) {
       var b = e.target.closest('.chip');
       if (!b) return;
-      state.cat = b.dataset.cat; state.sub = '全部';
+      state.cat = b.dataset.cat; state.sub = '全部'; if (!b.dataset.silent) state.page = 1;
       chips.querySelectorAll('.chip').forEach(function (c) { c.classList.toggle('active', c === b); });
       renderSubchips();
       var n = render();
@@ -158,7 +196,7 @@
       var b = e.target.closest('.chip');
       if (!b) return;
       var silent = !!b.dataset.silent;
-      state.sub = b.dataset.sub;
+      state.sub = b.dataset.sub; if (!silent) state.page = 1;
       renderSubchips();
       var n = render();
       if (silent) return;
@@ -168,7 +206,7 @@
     /* 搜尋：停止輸入 1 秒後才送，避免每個字都送一次 */
     var timer, lastSent = '';
     input.addEventListener('input', function () {
-      state.q = input.value;
+      state.q = input.value; state.page = 1;
       var n = render();
       clearTimeout(timer);
       timer = setTimeout(function () {
@@ -203,8 +241,8 @@
     var liked = safeGet('bn_like_' + r.id) === '1';
 
     main.innerHTML =
-      '<nav class="crumb"><a href="index.html">首頁</a> / <a href="index.html?cat=' + encodeURIComponent(r.category) + '">' + esc(r.category) + '</a>' +
-      (r.subcategory ? ' / <a href="index.html?cat=' + encodeURIComponent(r.category) + '&sub=' + encodeURIComponent(r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>' +
+      '<nav class="crumb"><a href="index.html">首頁</a> / <a href="reviews.html?cat=' + encodeURIComponent(r.category) + '">' + esc(r.category) + '</a>' +
+      (r.subcategory ? ' / <a href="reviews.html?cat=' + encodeURIComponent(r.category) + '&sub=' + encodeURIComponent(r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>' +
       '<header class="review-head">' + cover(r, 'lg') +
       '<div><span class="tag">' + esc(catLabel(r)) + '</span><h1>' + esc(seoH1(r)) + '</h1>' +
       '<p class="meta">' + esc(r.author) + '</p><p class="rating">' + seal(r.rating, 'lg') + '<span class="stars big" aria-hidden="true">' + stars(r.rating) + '</span></p>' +
@@ -354,7 +392,7 @@
     });
   }
 
-  /* 首頁支援 ?cat= 帶入分類 */
+  /* 心得列表頁支援 ?cat=、?sub= 帶入分類 */
   function applyCatParam() {
     var cat = new URLSearchParams(location.search).get('cat');
     if (!cat) return;
@@ -367,7 +405,8 @@
     if (sb) { sb.dataset.silent = '1'; sb.click(); }
   }
 
-  if (page === 'home') { initHome(); applyCatParam(); }
+  if (page === 'home') initHome();
+  if (page === 'reviews') { initReviewsList(); applyCatParam(); }
   if (page === 'review') initReview();
   if (page === 'list' || page === 'books') bindCardClicks($('main'));   // 書單與總表的連結也送 select_content
   initNewsletter();
