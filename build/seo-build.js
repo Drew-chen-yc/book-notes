@@ -11,6 +11,23 @@ function buildSite(REVIEWS, opts) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
+  /* 結構化資料：BreadcrumbList、ItemList，以及 meta description 的長度上限 */
+  function ldTag(o) { return '  <script type="application/ld+json">' + JSON.stringify(o).replace(/</g, '\\u003c') + '</script>'; }
+  function crumbLd(items) {   // items = [[名稱, 檔名], ...]，首頁的檔名是空字串
+    return { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items.map(function (it, i) {
+      return { '@type': 'ListItem', position: i + 1, name: it[0], item: BASE + it[1] };
+    }) };
+  }
+  function itemListLd(rows) {   // rows = [[名稱, 檔名], ...]
+    return { '@type': 'ItemList', numberOfItems: rows.length, itemListElement: rows.map(function (x, i) {
+      return { '@type': 'ListItem', position: i + 1, name: x[0], url: BASE + x[1] };
+    }) };
+  }
+  function collectionLd(name, file, desc, rows) {
+    return { '@context': 'https://schema.org', '@type': 'CollectionPage', name: name, url: BASE + file, description: desc, inLanguage: 'zh-Hant-TW',
+      isPartOf: { '@type': 'WebSite', name: '折角 Dogeared', url: BASE }, mainEntity: itemListLd(rows) };
+  }
+  function clip(d) { return d.length > 160 ? d.slice(0, 159) + '…' : d; }
   function stars(n) { var f = Math.floor(n), h = n > f ? 1 : 0; return '★★★★★'.slice(0, f) + (h ? '<span class="star-half">☆</span>' : '') + '☆☆☆☆☆'.slice(0, 5 - f - h); }
   /* SEO 用字：標題、H1、開頭第一句都對準「書名＋心得／評價／好看嗎」這類搜尋字詞 */
   function seoAsk(r) { return r.category === '小說' ? '好看嗎' : '值得讀嗎'; }
@@ -95,6 +112,7 @@ function buildSite(REVIEWS, opts) {
     return LISTS.filter(function (l) { return l.sections.some(function (s) { return (s.items || []).some(function (it) { return it.id === r.id; }); }); });
   }
   function shell(o) {   // 書單、總表這類靜態頁的外殼
+    o.desc = clip(o.desc);
     return [
       '<!doctype html>',
       '<html lang="zh-Hant-TW" data-page-type="' + o.type + '" data-content-group="' + o.group + '">',
@@ -110,6 +128,7 @@ function buildSite(REVIEWS, opts) {
       '  <meta property="og:description" content="' + esc(o.desc) + '">',
       '  <meta property="og:url" content="' + BASE + o.file + '">',
       '  <meta name="twitter:card" content="summary">',
+      (o.ld || []).map(ldTag).join('\n'),
       '  <!-- 追蹤程式必須最先載入：Consent 預設值 → dataLayer 脈絡 → GTM -->',
       '  <script src="assets/analytics.js"></script>',
       '  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">',
@@ -133,7 +152,7 @@ function buildSite(REVIEWS, opts) {
   var files = {};
   REVIEWS.forEach(function (r) {
     var url = BASE + r.id + '.html';
-    var title = seoTitle(r), intro = seoIntro(r), desc = intro + r.summary, rel = relatedOf(r, REVIEWS, 4);
+    var title = seoTitle(r), intro = seoIntro(r), desc = clip(intro + r.summary), rel = relatedOf(r, REVIEWS, 4);
     var ld = {
       '@context': 'https://schema.org',
       '@type': 'Review',
@@ -163,7 +182,9 @@ function buildSite(REVIEWS, opts) {
       '  <meta property="og:url" content="' + url + '">',
       '  <meta property="article:published_time" content="' + r.date + '">',
       '  <meta name="twitter:card" content="summary">',
-      '  <script type="application/ld+json">' + JSON.stringify(ld).replace(/</g, '\\u003c') + '</script>',
+      ldTag(ld),
+      ldTag(crumbLd([['首頁', ''], ['心得', 'reviews.html'], [r.category, catHref(r.category)]]
+        .concat(r.subcategory ? [[r.subcategory, catHref(r.category, r.subcategory)]] : [], [[seoH1(r), r.id + '.html']]))),
       '  <!-- 追蹤程式必須最先載入：Consent 預設值 → dataLayer 脈絡 → GTM -->',
       '  <script src="assets/analytics.js"></script>',
       '  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">',
@@ -205,8 +226,10 @@ function buildSite(REVIEWS, opts) {
     .sort(function (a, b) { return b.r.rating - a.r.rating || a.i - b.i; }).map(function (o) { return o.r; });
   files['books.html'] = shell({
     file: 'books.html', type: 'books', group: '總表',
+    ld: [collectionLd('全部的書', 'books.html', '折角 Dogeared 讀過的 ' + REVIEWS.length + ' 本書總表，含類型、評分和一句話短評。',
+      sorted.map(function (r) { return ['《' + r.title + '》', r.id + '.html']; })), crumbLd([['首頁', ''], ['全部的書', 'books.html']])],
     title: '全部的書：' + REVIEWS.length + ' 本讀書心得的評分與一句話短評',
-    desc: '折角 Dogeared讀過的 ' + REVIEWS.length + ' 本書總表，含類型、評分和一句話短評，點書名看完整心得。',
+    desc: '折角 Dogeared 讀過的 ' + REVIEWS.length + ' 本書總表，含類型、評分和一句話短評，點書名看完整心得。',
     main: [
       '    <h1>全部的書</h1>',
       '    <p class="meta">共 ' + REVIEWS.length + ' 本，依評分排序，滿分 5 顆星。點書名看完整心得。</p>',
@@ -225,6 +248,12 @@ function buildSite(REVIEWS, opts) {
     var pos = 0;
     files[l.id + '.html'] = shell({
       file: l.id + '.html', type: 'list', group: '書單', title: l.title, desc: l.description,
+      ld: [{ '@context': 'https://schema.org', '@type': 'Article', headline: l.title, description: l.description, url: BASE + l.id + '.html',
+        mainEntityOfPage: BASE + l.id + '.html', datePublished: l.date, inLanguage: 'zh-Hant-TW', image: BASE + 'assets/og.png',
+        author: { '@type': 'Organization', name: '折角 Dogeared', url: BASE }, publisher: { '@type': 'Organization', name: '折角 Dogeared', url: BASE },
+        mainEntity: itemListLd(l.sections.reduce(function (a, sec) { return a.concat(sec.items || []); }, []).map(function (it) {
+          var b = byId(it.id); return ['《' + (b ? b.title : it.id) + '》', it.id + '.html'];
+        })) }, crumbLd([['首頁', ''], ['書單', 'lists.html'], [l.title, l.id + '.html']])],
       main: [
         '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="lists.html">書單</a></nav>',
         '    <h1>' + esc(l.title) + '</h1>',
@@ -263,8 +292,11 @@ function buildSite(REVIEWS, opts) {
     catPages.push(file);
     files[file] = shell({
       file: file, type: 'category', group: '分類', wide: true,
+      ld: [collectionLd(name + '心得', file, '折角 Dogeared 的 ' + rows.length + ' 篇' + name + '心得與評價。',
+        rows.map(function (r) { return [seoH1(r), r.id + '.html']; })),
+        crumbLd([['首頁', ''], ['心得', 'reviews.html']].concat(sub ? [[cat, catHref(cat)]] : [], [[sub || cat, file]]))],
       title: name + '心得與評價：' + rows.length + ' 篇讀書心得',
-      desc: '折角 Dogeared的 ' + rows.length + ' 篇' + name + '心得與評價，每本附評分、一句話短評和完整心得。',
+      desc: '折角 Dogeared 的 ' + rows.length + ' 篇' + name + '心得與評價，每本附評分、一句話短評和完整心得。',
       main: [
         '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="reviews.html">心得</a>' + (sub ? ' / <a href="' + catHref(cat) + '">' + esc(cat) + '</a>' : '') + ' / ' + esc(sub || cat) + '</nav>',
         '    <h1>' + esc(name) + '心得</h1>',
@@ -289,8 +321,10 @@ function buildSite(REVIEWS, opts) {
   /* 書單總覽頁：列出所有書單 */
   files['lists.html'] = shell({
     file: 'lists.html', type: 'lists', group: '書單',
+    ld: [collectionLd('書單', 'lists.html', '折角 Dogeared 的 ' + LISTS.length + ' 份書單，把讀過的書依主題整理。',
+      LISTS.map(function (l) { return [l.title, l.id + '.html']; })), crumbLd([['首頁', ''], ['書單', 'lists.html']])],
     title: '書單：依主題整理的讀書心得',
-    desc: '折角 Dogeared的 ' + LISTS.length + ' 份書單，把讀過的書依主題整理，每本附短評和完整心得連結。',
+    desc: '折角 Dogeared 的 ' + LISTS.length + ' 份書單，把讀過的書依主題整理，每本附短評和完整心得連結。',
     main: [
       '    <h1>書單</h1>',
       '    <p class="meta">共 ' + LISTS.length + ' 份，把讀過的書依主題整理。</p>',
