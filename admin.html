@@ -137,7 +137,7 @@
   var TOKEN_KEY = 'bn_admin_token', DRAFT_KEY = 'bn_admin_draft';
   var PALETTE = ['#c8553d', '#3d5a80', '#6d597a', '#e09f3e', '#2a9d8f', '#588157', '#9c6644', '#264653'];
 
-  var token = '', reviewsSrc = '', REVIEWS = [], CATEGORIES = [], SUBS = {}, buildSite = null;
+  var token = '', reviewsSrc = '', REVIEWS = [], CATEGORIES = [], SUBS = {}, buildSite = null, indexSrc = '';
   var $ = function (id) { return document.getElementById(id); };
   var F = ['title', 'author', 'id', 'category', 'rating', 'date', 'color', 'tags', 'summary', 'body'];
 
@@ -179,9 +179,9 @@
     status('連線中…');
     api('').then(function (repo) {
       if (!repo.permissions || !repo.permissions.push) throw new Error('這個權杖沒有寫入權限，請確認 Contents 設為 Read and write。');
-      return Promise.all([getFile('data/reviews.js'), getFile('build/seo-build.js')]);
+      return Promise.all([getFile('data/reviews.js'), getFile('build/seo-build.js'), getFile('index.html')]);
     }).then(function (res) {
-      reviewsSrc = res[0];
+      reviewsSrc = res[0]; indexSrc = res[2];
       var data = evalData(reviewsSrc);
       REVIEWS = data.REVIEWS; CATEGORIES = data.CATEGORIES; SUBS = data.SUBCATEGORIES || {};
       buildSite = new Function('module', res[1] + '\nreturn buildSite;')(undefined);
@@ -312,7 +312,7 @@
       newSrc = serialize(list);
       var check = evalData(newSrc);
       if (check.REVIEWS.length !== list.length || !check.CATEGORIES || !check.STORES) throw new Error('產生的資料檔驗證失敗，未發布。');
-      files = buildSite(list, { today: today(), lists: check.LISTS || [] });
+      files = buildSite(list, { today: today(), lists: check.LISTS || [], indexHtml: indexSrc });
     } catch (e) { status(esc(e.message), true); return; }
     var tree = [{ path: 'data/reviews.js', mode: '100644', type: 'blob', content: newSrc }];
     Object.keys(files).forEach(function (name) { tree.push({ path: name, mode: '100644', type: 'blob', content: files[name] }); });
