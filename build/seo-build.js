@@ -344,6 +344,14 @@ function buildSite(REVIEWS, opts) {
   files['sitemap.xml'] = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     urls.map(function (u) { return '  <url><loc>' + u.loc + '</loc><lastmod>' + u.lastmod + '</lastmod></url>'; }).join('\n') +
     '\n</urlset>\n';
+  /* 首頁 index.html 是手寫頁：傳入 opts.indexHtml 時，把 data-count 的靜態數字換成目前的篇數一起輸出
+   * （app.js 載入後會再填一次；這裡是讓不跑 JS 的爬蟲也讀到正確的值）。Node 的 run.js 與後台 admin.html 都會傳 */
+  if (opts && opts.indexHtml) {
+    files['index.html'] = opts.indexHtml.replace(/(data-count="([^"]+)">)[^<]*/g, function (m, head, key) {
+      return head + (key === 'reviews' ? REVIEWS.length : key === 'lists' ? LISTS.length :
+        key.indexOf('cat:') === 0 ? REVIEWS.filter(function (r) { return r.category === key.slice(4); }).length : m.slice(head.length));
+    });
+  }
   return files;
 }
 if (typeof module !== 'undefined') module.exports = buildSite;
