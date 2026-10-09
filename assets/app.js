@@ -107,20 +107,23 @@
     });
   }
 
-  /* ================= 首頁：導覽用，只放最新 6 篇與書單 ================= */
+  /* ================= 首頁：導覽用，只放最新 6 篇與書單 =================
+   * 最新 6 篇與書單卡片已由 build/seo-build.js 寫進 index.html（搜尋引擎不跑程式也讀得到）。
+   * 這裡只在頁面上還沒有內容時才畫（舊版頁面的備援），或預覽環境改用 #id 連結時重畫。 */
   function initHome() {
     document.querySelectorAll('[data-count]').forEach(function (el) {
       var k = el.dataset.count;
       el.textContent = k === 'lists' ? (window.LISTS || []).length :
         k.indexOf('cat:') === 0 ? REVIEWS.filter(function (r) { return r.category === k.slice(4); }).length : REVIEWS.length;
     });
+    var redraw = window.BN_LINK_MODE === 'hash';
     var latest = $('#home-latest');
     if (latest) {
-      latest.innerHTML = REVIEWS.slice(0, 6).map(function (r, i) { return card(r, 'home_latest', i + 1); }).join('');
+      if (redraw || !latest.children.length) latest.innerHTML = REVIEWS.slice(0, 6).map(function (r, i) { return card(r, 'home_latest', i + 1); }).join('');
       bindCardClicks(latest);
     }
     var hl = $('#home-lists');
-    if (hl) {
+    if (hl && (redraw || !hl.children.length)) {
       hl.innerHTML = (window.LISTS || []).map(function (l) {
         var n = l.sections.reduce(function (a, x) { return a + (x.items || []).length; }, 0);
         return '<a class="list-card" href="' + esc(l.id) + '.html"><b>' + esc(l.title) + '</b><small>' + n + ' 本 · ' + esc(l.date) + '</small></a>';
@@ -476,10 +479,12 @@
   if (page === 'review') initReview();
   if (page === 'list' || page === 'books' || page === 'category') bindCardClicks($('main'));
 
-  /* 導覽列下拉選單與頁尾網站地圖：全站共用，依資料產生（只列有心得的分類） */
+  /* 導覽列下拉選單與頁尾網站地圖：全站共用（只列有心得的分類）。
+   * 正式頁面已由 build/seo-build.js 把這兩塊寫進 HTML，內容與順序兩邊要一致；
+   * 這裡只在頁面上沒有時才動態補上（瀏覽器還留著舊版頁面，或新的手寫頁還沒加進 build 的 HAND_PAGES 時）。 */
   function initSiteNav() {
     var link = document.querySelector('.site-header nav a[href="reviews.html"]');
-    if (link) {
+    if (link && !link.closest('.dd')) {
       var dd = document.createElement('div');
       dd.className = 'dd';
       link.parentNode.insertBefore(dd, link);
@@ -495,7 +500,7 @@
       dd.appendChild(menu);
     }
     var foot = document.querySelector('.site-footer .copyright');
-    if (foot) {
+    if (foot && !document.querySelector('.site-footer .sitemap')) {
       var col = function (title, links) { return '<div><h3>' + title + '</h3>' + links.join('') + '</div>'; };
       var a = function (href, text) { return '<a href="' + href + '">' + esc(text) + '</a>'; };
       var map = document.createElement('nav');
