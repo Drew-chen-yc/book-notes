@@ -2,6 +2,7 @@
  * 同一份程式可在 Node（node build/run.js）或瀏覽器執行
  * 新增或修改心得後重新產生一次即可
  * 另外產生 books.html（總表）與每篇書單文 <id>.html（opts.lists = window.LISTS）
+ * 導覽列下拉選單、頁尾網站地圖、首頁的最新心得與書單卡片也在這裡寫成靜態 HTML（手寫頁經 opts.pages 傳入）
  */
 function buildSite(REVIEWS, opts) {
   var BASE = (opts && opts.base) || 'https://drew-chen-yc.github.io/book-notes/';
@@ -55,6 +56,39 @@ function buildSite(REVIEWS, opts) {
     flush();
     return out;
   }
+  /* 分類頁網址：cat-<分類>.html、cat-<分類>-<子分類>.html（build/seo-build.js 與 assets/app.js 各有一份，要同步） */
+  var LISTS = (opts && opts.lists) || [];
+  var CAT_SLUG = { '小說': 'novel', '自我成長': 'self-growth', '心理學': 'psychology', '人文社科': 'humanities', '歷史': 'history', '投資理財': 'investing' };
+  var SUB_SLUG = { '仙俠': 'xianxia', '玄幻': 'xuanhuan', '奇幻': 'fantasy', '科幻': 'scifi', '推理': 'mystery', '文學': 'literary', '歷史': 'historical', '愛情': 'romance', '翻譯': 'translated', '其他': 'other' };
+  function catHref(cat, sub) { return 'cat-' + CAT_SLUG[cat] + (sub ? '-' + SUB_SLUG[sub] : '') + '.html'; }
+  /* 導覽列下拉選單與頁尾網站地圖：直接寫進每一頁的 HTML，搜尋引擎不必執行程式就讀得到所有分類頁與書單的連結。
+   * 內容與順序要和 assets/app.js 的 initSiteNav() 一致（那邊只在頁面沒有這兩塊時才動態補上）。
+   * 分類順序依 data/reviews.js 的 CATEGORIES、SUBCATEGORIES（opts.categories、opts.subcategories），只列有心得的。 */
+  var APP_VER = '20261009a';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
+  function countOf(cat, sub) { return REVIEWS.filter(function (r) { return r.category === cat && (!sub || r.subcategory === sub); }).length; }
+  function uniq(list) { return list.filter(function (x, i) { return x && list.indexOf(x) === i; }); }
+  var LIVE_CATS = ((opts && opts.categories) || uniq(REVIEWS.map(function (r) { return r.category; })))
+    .filter(function (c) { return countOf(c) > 0; }).sort(function (x, y) { return countOf(y) - countOf(x); });   // 篇數多的排前面
+  function liveSubs(cat) {
+    return (((opts && opts.subcategories) || {})[cat] || uniq(REVIEWS.filter(function (r) { return r.category === cat; }).map(function (r) { return r.subcategory; })))
+      .filter(function (s) { return countOf(cat, s) > 0; });
+  }
+  var NAV = '<nav><div class="dd"><a href="reviews.html" aria-haspopup="true">心得</a><div class="dd-menu">' +
+    '<a href="reviews.html"><b>全部心得</b><small>' + REVIEWS.length + '</small></a>' + LIVE_CATS.map(function (c) {
+      return '<a href="' + catHref(c) + '"><b>' + esc(c) + '</b><small>' + countOf(c) + '</small></a>' + liveSubs(c).map(function (s) {
+        return '<a class="dd-sub" href="' + catHref(c, s) + '">' + esc(s) + '<small>' + countOf(c, s) + '</small></a>';
+      }).join('');
+    }).join('') + '</div></div><a href="lists.html">書單</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>';
+  function mapCol(title, links) {   // links = [[網址, 文字], ...]
+    return '<div><h3>' + esc(title) + '</h3>' + links.map(function (l) { return '<a href="' + l[0] + '">' + esc(l[1]) + '</a>'; }).join('') + '</div>';
+  }
+  var SITEMAP = '<nav class="sitemap" aria-label="網站地圖">' +
+    mapCol('分類', LIVE_CATS.map(function (c) { return [catHref(c), c + '（' + countOf(c) + '）']; })) +
+    LIVE_CATS.filter(function (c) { return liveSubs(c).length; }).map(function (c) {
+      return mapCol(c + '類型', liveSubs(c).map(function (s) { return [catHref(c, s), s + '（' + countOf(c, s) + '）']; }));
+    }).join('') +
+    mapCol('書單', LISTS.map(function (l) { return [l.id + '.html', l.title]; })) +
+    mapCol('網站', [['index.html', '首頁'], ['reviews.html', '全部心得'], ['lists.html', '書單總覽'], ['books.html', '全部的書（總表）'], ['feedback.html', '推薦好書／意見回饋'], ['about.html', '關於']]) + '</nav>';
   var FOOT = [
     '  <footer class="site-footer"><div class="wrap">',
     '    <form id="newsletter" novalidate>',
@@ -71,17 +105,17 @@ function buildSite(REVIEWS, opts) {
     '      </div>',
     '      <p class="form-msg" aria-live="polite"></p>',
     '    </form>',
+    '    ' + SITEMAP,
     '    <p class="copyright">© 2026 折角 Dogeared · <a href="about.html#privacy">隱私說明</a></p>',
     '  </div></footer>',
     '  <script src="data/reviews.js"></script>',
-    '  <script src="assets/app.js?v=20261004a"></script>',
+    '  <script src="assets/app.js?v=' + APP_VER + '"></script>',
     '</body>',
     '</html>',
     ''
   ].join('\n');
 
   /* 書單文（data/reviews.js 的 window.LISTS）與總表頁共用的小工具 */
-  var LISTS = (opts && opts.lists) || [];
   function byId(id) { for (var i = 0; i < REVIEWS.length; i++) if (REVIEWS[i].id === id) return REVIEWS[i]; return null; }
   function genreKey(r) { return ({ '仙俠': 'xian', '玄幻': 'xuan', '奇幻': 'fantasy', '科幻': 'scifi', '推理': 'mystery', '文學': 'lit' })[r.subcategory] || 'plain'; }
   /* 評分印章：全站同一顆，size = xs（行內）／sm（卡片）／lg（心得頁） */
@@ -90,10 +124,6 @@ function buildSite(REVIEWS, opts) {
     return '<div class="cover cover-' + size + '" data-g="' + genreKey(r) + '" style="--c:' + r.color + '" aria-hidden="true">' +
       '<em>' + esc(r.subcategory || r.category) + '</em><span>' + esc(r.title) + '</span><small>' + esc(r.author) + '</small></div>';
   }
-  /* 分類頁網址：cat-<分類>.html、cat-<分類>-<子分類>.html（build/seo-build.js 與 assets/app.js 各有一份，要同步） */
-  var CAT_SLUG = { '小說': 'novel', '自我成長': 'self-growth', '心理學': 'psychology', '人文社科': 'humanities', '歷史': 'history', '投資理財': 'investing' };
-  var SUB_SLUG = { '仙俠': 'xianxia', '玄幻': 'xuanhuan', '奇幻': 'fantasy', '科幻': 'scifi', '推理': 'mystery', '文學': 'literary', '歷史': 'historical', '愛情': 'romance', '翻譯': 'translated', '其他': 'other' };
-  function catHref(cat, sub) { return 'cat-' + CAT_SLUG[cat] + (sub ? '-' + SUB_SLUG[sub] : '') + '.html'; }
   function catName(cat, sub) { return sub ? sub + cat : cat; }
   function readMinutes(r) { return Math.max(1, Math.round(r.body.join('').length / 400)); }
   function crumbOf(r) {   // 首頁 / 心得 / 分類 / 子分類
@@ -140,7 +170,7 @@ function buildSite(REVIEWS, opts) {
       '<body>',
       '  <header class="site-header"><div class="wrap">',
       '    <a class="logo" href="index.html">折角<span>Dogeared</span><small>｜讀書心得與推薦</small></a>',
-      '    <nav><a href="reviews.html">心得</a><a href="lists.html">書單</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>',
+      '    ' + NAV,
       '  </div></header>',
       '  <main class="wrap ' + (o.wide ? '' : 'narrow ') + 'listing">',
       o.main,
@@ -196,7 +226,7 @@ function buildSite(REVIEWS, opts) {
       '<body>',
       '  <header class="site-header"><div class="wrap">',
       '    <a class="logo" href="index.html">折角<span>Dogeared</span><small>｜讀書心得與推薦</small></a>',
-      '    <nav><a href="reviews.html">心得</a><a href="lists.html">書單</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>',
+      '    ' + NAV,
       '  </div></header>',
       '  <main class="wrap narrow" id="review">',
       '    ' + crumbOf(r),
@@ -344,14 +374,42 @@ function buildSite(REVIEWS, opts) {
   files['sitemap.xml'] = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     urls.map(function (u) { return '  <url><loc>' + u.loc + '</loc><lastmod>' + u.lastmod + '</lastmod></url>'; }).join('\n') +
     '\n</urlset>\n';
-  /* 首頁 index.html 是手寫頁：傳入 opts.indexHtml 時，把 data-count 的靜態數字換成目前的篇數一起輸出
-   * （app.js 載入後會再填一次；這裡是讓不跑 JS 的爬蟲也讀到正確的值）。Node 的 run.js 與後台 admin.html 都會傳 */
-  if (opts && opts.indexHtml) {
-    files['index.html'] = opts.indexHtml.replace(/(data-count="([^"]+)">)[^<]*/g, function (m, head, key) {
-      return head + (key === 'reviews' ? REVIEWS.length : key === 'lists' ? LISTS.length :
-        key.indexOf('cat:') === 0 ? REVIEWS.filter(function (r) { return r.category === key.slice(4); }).length : m.slice(head.length));
-    });
+  /* 手寫頁（清單在最下面的 buildSite.HAND_PAGES）：傳入 opts.pages = { 檔名: 原始碼 } 時，把導覽列下拉選單與頁尾網站地圖寫進 HTML、
+   * app.js 的版本參數換成 APP_VER 後一起輸出；首頁另外寫入篇數（data-count）、最新 6 篇與書單卡片。
+   * 這樣不跑 JS 的爬蟲也讀得到這些連結；app.js 看到頁面上已經有就不再重畫。同一頁重複處理結果不變。
+   * Node 的 run.js 與後台 admin.html 都會傳。opts.indexHtml 是舊寫法，等同 pages['index.html']。 */
+  var PAGES = {};
+  Object.keys((opts && opts.pages) || {}).forEach(function (name) { PAGES[name] = opts.pages[name]; });
+  if (opts && opts.indexHtml) PAGES['index.html'] = opts.indexHtml;
+  function need(ok, name, what) { if (!ok) throw new Error(name + ' 找不到' + what + '，沒有產生任何檔案。'); }
+  function fill(src, name, id, rows) {   // 把 <div id="..."> 的內容換成 rows，一列一行
+    var re = new RegExp('(<div id="' + id + '"[^>]*>)[\\s\\S]*?(</div>\\s*</section>)');
+    need(re.test(src), name, ' #' + id);
+    return src.replace(re, function (m, open, close) { return open + '\n' + rows.map(function (x) { return '        ' + x + '\n'; }).join('') + '      ' + close; });
   }
+  Object.keys(PAGES).forEach(function (name) {
+    var s = PAGES[name];
+    need(/<nav>[\s\S]*?<\/nav>/.test(s), name, '導覽列 <nav>');
+    s = s.replace(/<nav>[\s\S]*?<\/nav>/, function () { return NAV; });
+    s = s.replace(/[ \t]*<nav class="sitemap"[^>]*>[\s\S]*?<\/nav>\n?/, '');
+    need(/^[ \t]*<p class="copyright">/m.test(s), name, '頁尾的 <p class="copyright">');
+    s = s.replace(/^([ \t]*)(<p class="copyright">)/m, function (m, sp, p) { return sp + SITEMAP + '\n' + sp + p; });
+    s = s.replace(/assets\/app\.js\?v=\w+/g, 'assets/app.js?v=' + APP_VER);
+    if (name === 'index.html') {
+      s = s.replace(/(data-count="([^"]+)">)[^<]*/g, function (m, head, key) {
+        return head + (key === 'reviews' ? REVIEWS.length : key === 'lists' ? LISTS.length :
+          key.indexOf('cat:') === 0 ? REVIEWS.filter(function (r) { return r.category === key.slice(4); }).length : m.slice(head.length));
+      });
+      s = fill(s, name, 'home-latest', REVIEWS.slice(0, 6).map(function (r, i) { return staticCard(r, 'home_latest', i + 1); }));
+      s = fill(s, name, 'home-lists', LISTS.map(function (l) {
+        var n = l.sections.reduce(function (a, x) { return a + (x.items || []).length; }, 0);
+        return '<a class="list-card" href="' + esc(l.id) + '.html"><b>' + esc(l.title) + '</b><small>' + n + ' 本 · ' + esc(l.date) + '</small></a>';
+      }));
+    }
+    files[name] = s;
+  });
   return files;
 }
+/* 要經過 build 的手寫頁；run.js 與後台都依這份清單讀檔 */
+buildSite.HAND_PAGES = ['index.html', 'reviews.html', 'about.html', 'feedback.html', 'review.html'];
 if (typeof module !== 'undefined') module.exports = buildSite;
