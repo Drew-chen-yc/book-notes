@@ -64,7 +64,7 @@ function buildSite(REVIEWS, opts) {
   /* 導覽列下拉選單與頁尾網站地圖：直接寫進每一頁的 HTML，搜尋引擎不必執行程式就讀得到所有分類頁與書單的連結。
    * 內容與順序要和 assets/app.js 的 initSiteNav() 一致（那邊只在頁面沒有這兩塊時才動態補上）。
    * 分類順序依 data/reviews.js 的 CATEGORIES、SUBCATEGORIES（opts.categories、opts.subcategories），只列有心得的。 */
-  var APP_VER = '20261018a';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
+  var APP_VER = '20261021a';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
   function countOf(cat, sub) { return REVIEWS.filter(function (r) { return r.category === cat && (!sub || r.subcategory === sub); }).length; }
   function uniq(list) { return list.filter(function (x, i) { return x && list.indexOf(x) === i; }); }
   var LIVE_CATS = ((opts && opts.categories) || uniq(REVIEWS.map(function (r) { return r.category; })))
@@ -130,10 +130,15 @@ function buildSite(REVIEWS, opts) {
     return '<nav class="crumb"><a href="index.html">首頁</a> / <a href="reviews.html">心得</a> / <a href="' + catHref(r.category) + '">' + esc(r.category) + '</a>' +
       (r.subcategory ? ' / <a href="' + catHref(r.category, r.subcategory) + '">' + esc(r.subcategory) + '</a>' : '') + '</nav>';
   }
-  function staticCard(r, listName, pos) {
-    return '<a class="card" href="' + esc(r.id) + '.html" data-id="' + esc(r.id) + '" data-list="' + listName + '" data-pos="' + pos + '">' + cover(r, 'sm') +
-      '<div class="card-body"><span class="tag">' + esc(catLabel(r)) + '</span>' + seal(r.rating, 'sm') + '<h3>' + esc(r.title) + '</h3><p class="meta">' + esc(r.author) + '</p>' +
-      '<p>' + esc(r.summary) + '</p><p class="meta">' + r.date + ' · 約 ' + readMinutes(r) + ' 分鐘</p></div></a>';
+  /* 心得清單的一列：日期｜書名、作者、分類、一句話｜評分。同一天的第二列起日期淡出，看起來像依日期分組的清單 */
+  function rowItem(r, listName, pos, sameDay) {
+    return '<a class="row' + (sameDay ? ' same-day' : '') + '" href="' + esc(r.id) + '.html" data-id="' + esc(r.id) + '" data-list="' + listName + '" data-pos="' + pos + '">' +
+      '<time class="row-date" datetime="' + r.date + '">' + r.date.replace(/-/g, '.') + '</time>' +
+      '<span class="row-main"><span class="row-title">' + esc(r.title) + '</span><span class="row-sub">' + esc(r.author) + '<span class="tag">' + esc(catLabel(r)) + '</span></span>' +
+      '<span class="row-sum">' + esc(r.summary) + '</span></span>' + seal(r.rating, 'xs') + '</a>';
+  }
+  function rowList(list, listName) {
+    return list.map(function (r, i) { return rowItem(r, listName, i + 1, i > 0 && list[i - 1].date === r.date); });
   }
   function catLabel(r) { return r.category + (r.subcategory ? '・' + r.subcategory : ''); }
   function para(p) { return '    <p>' + esc(p) + '</p>'; }
@@ -165,7 +170,7 @@ function buildSite(REVIEWS, opts) {
       '  <meta property="og:image" content="' + BASE + 'assets/og.png">',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261004a">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261021a">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -221,7 +226,7 @@ function buildSite(REVIEWS, opts) {
       '  <meta property="og:image" content="' + BASE + 'assets/og.png">',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261004a">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261021a">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -337,8 +342,8 @@ function buildSite(REVIEWS, opts) {
         sub ? '    <p class="chips cat-links"><a class="chip" href="' + catHref(cat) + '">全部' + esc(cat) + '</a>' + seen[cat].subs.map(function (s) {
           return '<a class="chip' + (s === sub ? ' active' : '') + '" href="' + catHref(cat, s) + '">' + esc(s) + '</a>';
         }).join('') + '</p>' : '',
-        '    <div class="grid">',
-        rows.map(function (r, i) { return '      ' + staticCard(r, 'category_' + slug, i + 1); }).join('\n'),
+        '    <div class="rows">',
+        rowList(rows, 'category_' + slug).map(function (x) { return '      ' + x; }).join('\n'),
         '    </div>'
       ].join('\n')
     });
@@ -400,7 +405,7 @@ function buildSite(REVIEWS, opts) {
         return head + (key === 'reviews' ? REVIEWS.length : key === 'lists' ? LISTS.length :
           key.indexOf('cat:') === 0 ? REVIEWS.filter(function (r) { return r.category === key.slice(4); }).length : m.slice(head.length));
       });
-      s = fill(s, name, 'home-latest', REVIEWS.slice(0, 6).map(function (r, i) { return staticCard(r, 'home_latest', i + 1); }));
+      s = fill(s, name, 'home-latest', rowList(REVIEWS.slice(0, 8), 'home_latest'));
       s = fill(s, name, 'home-lists', LISTS.map(function (l) {
         var n = l.sections.reduce(function (a, x) { return a + (x.items || []).length; }, 0);
         return '<a class="list-card" href="' + esc(l.id) + '.html"><b>' + esc(l.title) + '</b><small>' + n + ' 本 · ' + esc(l.date) + '</small></a>';

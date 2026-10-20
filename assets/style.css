@@ -386,3 +386,34 @@ a.chip { text-decoration: none; display: inline-block; }
 @media (max-width: 900px) { .start-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .start-grid { grid-template-columns: 1fr; gap: 12px; } .door-ico { width: 84px; height: 84px; } }
 @media (prefers-reduced-motion: reduce) { .door-ico { transition: none; } .door:hover .door-ico { transform: none; } }
+
+/* ===== 心得清單（2026-10-21，取代卡片牆）：一列一本，依發布日期由新到舊，同一天只標一次日期 ===== */
+.rows { margin: 0; padding: 8px; background: var(--surface); border-radius: 24px; box-shadow: var(--shadow); }
+.row { position: relative; display: grid; grid-template-columns: 104px minmax(0, 1fr) auto; column-gap: 20px; align-items: center;
+  padding: 14px 18px; border-radius: 16px; color: var(--text); text-decoration: none; }
+.row + .row::before { content: ""; position: absolute; top: 0; left: 18px; right: 18px; border-top: 1px solid var(--line); }
+.row.same-day::before { left: 142px; }
+.row:hover { background: var(--bg); }
+.row:hover::before, .row:hover + .row::before { border-color: transparent; }
+.row-date { align-self: start; padding-top: 2px; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.row.same-day .row-date { visibility: hidden; }
+.row-main { min-width: 0; }
+.row-title { font-size: 18px; font-weight: 700; line-height: 1.5; }
+.row:hover .row-title { color: var(--accent); }
+.row-sub { margin-left: 12px; font-size: 14px; color: var(--muted); }
+.row-sub .tag { margin-left: 10px; vertical-align: 1px; }
+.row-sum { display: block; margin-top: 2px; font-size: 15px; line-height: 1.6; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .seal { justify-self: end; }
+.listing .rows, section > .rows { margin-bottom: 32px; }
+.related .rows { margin-top: 8px; }
+@media (max-width: 560px) {
+  .rows { padding: 4px 6px; border-radius: 20px; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; padding: 12px 12px; }
+  .row-date { grid-column: 1 / -1; padding: 4px 0 2px; font-size: 13px; font-weight: 500; color: var(--accent); }
+  .row.same-day .row-date { display: none; }
+  .row.same-day::before { left: 12px; }
+  .row + .row::before { left: 12px; right: 12px; }
+  .row-title { font-size: 17px; }
+  .row-sub { display: block; margin: 0; font-size: 13px; }
+  .row-sum { display: none; }
+}

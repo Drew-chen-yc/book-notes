@@ -88,12 +88,16 @@
     return '<div class="cover cover-' + size + '" data-g="' + genreKey(r) + '" style="--c:' + r.color + '" aria-hidden="true">' +
       '<em>' + esc(r.subcategory || r.category) + '</em><span>' + esc(r.title) + '</span><small>' + esc(r.author) + '</small></div>';
   }
-  function card(r, listName, pos) {
-    return '<a class="card" href="' + reviewHref(r.id) + '" data-id="' + r.id +
-      '" data-list="' + listName + '" data-pos="' + pos + '">' + cover(r, 'sm') +
-      '<div class="card-body"><span class="tag">' + esc(catLabel(r)) + '</span>' +
-      seal(r.rating, 'sm') + '<h3>' + esc(r.title) + '</h3><p class="meta">' + esc(r.author) + '</p>' +
-      '<p>' + esc(r.summary) + '</p><p class="meta">' + r.date + ' · 約 ' + readMinutes(r) + ' 分鐘</p></div></a>';
+  /* 心得清單的一列（與 build/seo-build.js 的 rowItem 相同）：同一天的第二列起日期淡出 */
+  function row(r, listName, pos, sameDay) {
+    return '<a class="row' + (sameDay ? ' same-day' : '') + '" href="' + reviewHref(r.id) + '" data-id="' + r.id + '" data-list="' + listName + '" data-pos="' + pos + '">' +
+      '<time class="row-date" datetime="' + r.date + '">' + r.date.replace(/-/g, '.') + '</time>' +
+      '<span class="row-main"><span class="row-title">' + esc(r.title) + '</span><span class="row-sub">' + esc(r.author) + '<span class="tag">' + esc(catLabel(r)) + '</span></span>' +
+      '<span class="row-sum">' + esc(r.summary) + '</span></span>' + seal(r.rating, 'xs') + '</a>';
+  }
+  function rowList(list, listName, start) {
+    start = start || 0;
+    return list.map(function (r, i) { return row(r, listName, start + i + 1, i > 0 && list[i - 1].date === r.date); }).join('');
   }
 
   /* 列表點擊 → select_content（GA4 建議事件） */
@@ -119,7 +123,7 @@
     var redraw = window.BN_LINK_MODE === 'hash';
     var latest = $('#home-latest');
     if (latest) {
-      if (redraw || !latest.children.length) latest.innerHTML = REVIEWS.slice(0, 6).map(function (r, i) { return card(r, 'home_latest', i + 1); }).join('');
+      if (redraw || !latest.children.length) latest.innerHTML = rowList(REVIEWS.slice(0, 8), 'home_latest');
       bindCardClicks(latest);
     }
     var hl = $('#home-lists');
@@ -132,7 +136,7 @@
   }
 
   /* ================= 心得列表頁：搜尋、分類、分頁 ================= */
-  var PER_PAGE = 9;
+  var PER_PAGE = 20;
   function initReviewsList() {
     var list = $('#review-list'), empty = $('#empty'), input = $('#search'), chips = $('#chips');
     var state = { q: '', cat: '全部', sub: '全部', page: Math.max(1, parseInt(new URLSearchParams(location.search).get('page'), 10) || 1) };
@@ -160,7 +164,7 @@
       var pages = Math.max(1, Math.ceil(rows.length / PER_PAGE));
       state.page = Math.min(state.page, pages);
       var start = (state.page - 1) * PER_PAGE;
-      list.innerHTML = rows.slice(start, start + PER_PAGE).map(function (r, i) { return card(r, 'reviews_list', start + i + 1); }).join('');
+      list.innerHTML = rowList(rows.slice(start, start + PER_PAGE), 'reviews_list', start);
       empty.hidden = rows.length > 0;
       pager.hidden = pages < 2;
       pager.innerHTML = pages < 2 ? '' :
@@ -272,7 +276,7 @@
       window.STORES.map(function (s) {
         return '<a class="btn" target="_blank" rel="noopener" data-store="' + s.key + '" href="' + s.url(r) + '">到' + s.name + '看看 ↗</a>';
       }).join('') + '</div></section>' +
-      '<section class="related"><h2>同類型心得</h2><div id="related" class="grid"></div></section>' + inLists(r);
+      '<section class="related"><h2>同類型心得</h2><div id="related" class="rows"></div></section>' + inLists(r);
 
     track('view_review', base);
     window.BN.bumpProfile('view', r.category);
@@ -314,7 +318,7 @@
     /* 相關推薦 */
     var rel = relatedOf(r, REVIEWS, 4);
     var relBox = $('#related');
-    relBox.innerHTML = rel.map(function (x, i) { return card(x, 'review_related', i + 1); }).join('');
+    relBox.innerHTML = rel.map(function (x, i) { return row(x, 'review_related', i + 1, false); }).join('');
     bindCardClicks(relBox);
   }
 
