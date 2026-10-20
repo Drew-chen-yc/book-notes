@@ -74,6 +74,6 @@ book-notes/
 
 ## 6. 新增或修改心得（後台）
 
-打開 https://drew-chen-yc.github.io/book-notes/admin.html ，貼上 GitHub 權杖連線後填表、按「發布到網站」。後台會一次更新 `data/reviews.js`、產生該篇靜態頁 `<id>.html` 與 `sitemap.xml`，約 1 分鐘生效。
+打開 https://dogeared-notes.com/admin.html ，貼上 GitHub 權杖連線後填表、按「發布到網站」。後台會一次更新 `data/reviews.js`、產生該篇靜態頁 `<id>.html` 與 `sitemap.xml`，約 1 分鐘生效。
 
 權杖請用 Fine-grained token，只授權 book-notes 這個 repository 的 Contents：Read and write。後台頁不載入 GA，不會被追蹤，也不會出現在搜尋結果（noindex）。

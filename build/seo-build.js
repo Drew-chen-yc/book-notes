@@ -5,7 +5,7 @@
  * 導覽列下拉選單、頁尾網站地圖、首頁的最新心得與書單卡片也在這裡寫成靜態 HTML（手寫頁經 opts.pages 傳入）
  */
 function buildSite(REVIEWS, opts) {
-  var BASE = (opts && opts.base) || 'https://drew-chen-yc.github.io/book-notes/';
+  var BASE = (opts && opts.base) || 'https://dogeared-notes.com/';
   var TODAY = (opts && opts.today) || new Date().toISOString().slice(0, 10);
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
