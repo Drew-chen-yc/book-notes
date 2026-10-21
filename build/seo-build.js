@@ -379,6 +379,8 @@ function buildSite(REVIEWS, opts) {
   files['sitemap.xml'] = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     urls.map(function (u) { return '  <url><loc>' + u.loc + '</loc><lastmod>' + u.lastmod + '</lastmod></url>'; }).join('\n') +
     '\n</urlset>\n';
+  /* robots.txt：自訂網域後 repo 根目錄就是網域根目錄。全部允許抓取（noindex 的頁面要讓 Google 抓得到才看得到 noindex），只宣告 sitemap 位置 */
+  files['robots.txt'] = 'User-agent: *\nAllow: /\n\nSitemap: ' + BASE + 'sitemap.xml\n';
   /* 手寫頁（清單在最下面的 buildSite.HAND_PAGES）：傳入 opts.pages = { 檔名: 原始碼 } 時，把導覽列下拉選單與頁尾網站地圖寫進 HTML、
    * app.js 的版本參數換成 APP_VER 後一起輸出；首頁另外寫入篇數（data-count）、最新 6 篇與書單卡片。
    * 這樣不跑 JS 的爬蟲也讀得到這些連結；app.js 看到頁面上已經有就不再重畫。同一頁重複處理結果不變。
