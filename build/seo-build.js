@@ -7,6 +7,10 @@
 function buildSite(REVIEWS, opts) {
   var BASE = (opts && opts.base) || 'https://dogeared-notes.com/';
   var TODAY = (opts && opts.today) || new Date().toISOString().slice(0, 10);
+  /* Google AdSense 發布商 ID（2026-10-22）：每一頁的 <head> 加驗證用 meta，根目錄產生 ads.txt。設成空字串就全部拿掉。
+   * 廣告版位另外由 app.js 控制，這裡只負責網站驗證與 ads.txt。 */
+  var ADSENSE_PUB = (opts && opts.adsensePub !== undefined) ? opts.adsensePub : 'ca-pub-6909935015327096';
+  var ADS_META = ADSENSE_PUB ? '  <meta name="google-adsense-account" content="' + ADSENSE_PUB + '">' : '';
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -153,7 +157,7 @@ function buildSite(REVIEWS, opts) {
       '<html lang="zh-Hant-TW" data-page-type="' + o.type + '" data-content-group="' + o.group + '">',
       '<head>',
       '  <meta charset="utf-8">',
-      '  <meta name="viewport" content="width=device-width, initial-scale=1">',
+      '  <meta name="viewport" content="width=device-width, initial-scale=1">' + (ADS_META ? '\n' + ADS_META : ''),
       '  <title>' + esc(o.title) + '｜折角 Dogeared</title>',
       '  <meta name="description" content="' + esc(o.desc) + '">',
       '  <link rel="canonical" href="' + BASE + o.file + '">',
@@ -206,7 +210,7 @@ function buildSite(REVIEWS, opts) {
       '<html lang="zh-Hant-TW" data-page-type="review" data-content-group="心得內頁" data-review-id="' + esc(r.id) + '">',
       '<head>',
       '  <meta charset="utf-8">',
-      '  <meta name="viewport" content="width=device-width, initial-scale=1">',
+      '  <meta name="viewport" content="width=device-width, initial-scale=1">' + (ADS_META ? '\n' + ADS_META : ''),
       '  <title>' + esc(title) + '</title>',
       '  <meta name="description" content="' + esc(desc) + '">',
       '  <link rel="canonical" href="' + url + '">',
@@ -380,6 +384,7 @@ function buildSite(REVIEWS, opts) {
     urls.map(function (u) { return '  <url><loc>' + u.loc + '</loc><lastmod>' + u.lastmod + '</lastmod></url>'; }).join('\n') +
     '\n</urlset>\n';
   /* robots.txt：自訂網域後 repo 根目錄就是網域根目錄。全部允許抓取（noindex 的頁面要讓 Google 抓得到才看得到 noindex），只宣告 sitemap 位置 */
+  if (ADSENSE_PUB) files['ads.txt'] = 'google.com, ' + ADSENSE_PUB.replace(/^ca-/, '') + ', DIRECT, f08c47fec0942fa0\n';
   files['robots.txt'] = 'User-agent: *\nAllow: /\n\nSitemap: ' + BASE + 'sitemap.xml\n';
   /* 手寫頁（清單在最下面的 buildSite.HAND_PAGES）：傳入 opts.pages = { 檔名: 原始碼 } 時，把導覽列下拉選單與頁尾網站地圖寫進 HTML、
    * app.js 的版本參數換成 APP_VER 後一起輸出；首頁另外寫入篇數（data-count）、最新 6 篇與書單卡片。
@@ -402,6 +407,11 @@ function buildSite(REVIEWS, opts) {
     need(/^[ \t]*<p class="copyright">/m.test(s), name, '頁尾的 <p class="copyright">');
     s = s.replace(/^([ \t]*)(<p class="copyright">)/m, function (m, sp, p) { return sp + SITEMAP + '\n' + sp + p; });
     s = s.replace(/assets\/app\.js\?v=\w+/g, 'assets/app.js?v=' + APP_VER);
+    s = s.replace(/[ \t]*<meta name="google-adsense-account"[^>]*>\n?/g, '');
+    if (ADS_META) {
+      need(/^[ \t]*<meta name="viewport"[^>]*>$/m.test(s), name, ' <meta name="viewport">');
+      s = s.replace(/^([ \t]*<meta name="viewport"[^>]*>)$/m, function (m) { return m + '\n' + ADS_META; });
+    }
     if (name === 'index.html') {
       s = s.replace(/(data-count="([^"]+)">)[^<]*/g, function (m, head, key) {
         return head + (key === 'reviews' ? REVIEWS.length : key === 'lists' ? LISTS.length :
