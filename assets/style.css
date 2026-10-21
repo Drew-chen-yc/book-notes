@@ -417,3 +417,29 @@ a.chip { text-decoration: none; display: inline-block; }
   .row-sub { display: block; margin: 0; font-size: 13px; }
   .row-sum { display: none; }
 }
+
+/* ===== 書訊（新聞／得獎／排行榜）：清單一列一則，每列都標日期 ===== */
+.nrow { position: relative; display: grid; grid-template-columns: 104px 64px minmax(0, 1fr); column-gap: 16px; align-items: center;
+  padding: 14px 18px; border-radius: 16px; color: var(--text); text-decoration: none; }
+.nrow[hidden] { display: none; }
+.rows > a + a::before { content: ""; position: absolute; top: 0; left: 18px; right: 18px; border-top: 1px solid var(--line); }
+.rows > .row.same-day::before { left: 142px; }
+.nrow:hover { background: var(--bg); }
+.nrow:hover .row-title { color: var(--accent); }
+.nrow .row-date { align-self: center; padding-top: 0; }
+.ntype { justify-self: start; font-size: 13px; font-weight: 500; line-height: 1.6; padding: 1px 10px; border-radius: 999px; white-space: nowrap; }
+.ntype-news { background: var(--chip); color: var(--accent); }
+.ntype-award { background: var(--star-bg); color: var(--star); }
+.ntype-rank { background: var(--sky); color: var(--text); }
+.nsrc { display: block; margin: 0; }
+.news-article { margin-top: 12px; }
+.news-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 8px 0 0; font-size: 14px; color: var(--muted); }
+.news-article h1 { margin: 10px 0 12px; font-size: clamp(26px, 4vw, 34px); line-height: 1.4; }
+.news-article .lead { font-size: 19px; color: var(--text); background: var(--panel); border-radius: 20px; padding: 18px 22px; }
+.news-source { margin-top: 24px; padding: 14px 20px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); font-size: 16px; }
+@media (max-width: 560px) {
+  .nrow { grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; padding: 12px; }
+  .nrow .row-date { grid-column: 1 / -1; font-size: 13px; font-weight: 400; color: var(--muted); padding: 0; }
+  .rows > a + a::before { left: 12px; right: 12px; }
+  .rows > .row.same-day::before { left: 12px; }
+}

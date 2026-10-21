@@ -68,7 +68,7 @@ function buildSite(REVIEWS, opts) {
   /* 導覽列下拉選單與頁尾網站地圖：直接寫進每一頁的 HTML，搜尋引擎不必執行程式就讀得到所有分類頁與書單的連結。
    * 內容與順序要和 assets/app.js 的 initSiteNav() 一致（那邊只在頁面沒有這兩塊時才動態補上）。
    * 分類順序依 data/reviews.js 的 CATEGORIES、SUBCATEGORIES（opts.categories、opts.subcategories），只列有心得的。 */
-  var APP_VER = '20261021a';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
+  var APP_VER = '20261021b';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
   function countOf(cat, sub) { return REVIEWS.filter(function (r) { return r.category === cat && (!sub || r.subcategory === sub); }).length; }
   function uniq(list) { return list.filter(function (x, i) { return x && list.indexOf(x) === i; }); }
   var LIVE_CATS = ((opts && opts.categories) || uniq(REVIEWS.map(function (r) { return r.category; })))
@@ -77,12 +77,44 @@ function buildSite(REVIEWS, opts) {
     return (((opts && opts.subcategories) || {})[cat] || uniq(REVIEWS.filter(function (r) { return r.category === cat; }).map(function (r) { return r.subcategory; })))
       .filter(function (s) { return countOf(cat, s) > 0; });
   }
+  /* 書訊（新聞／得獎／排行榜）：資料在 data/reviews.js 的 window.NEWS（opts.news）。依日期由新到舊；同一天維持資料裡的順序。
+   * 沒有任何一則時，導覽列、首頁區塊、news.html 都不出現。 */
+  var NEWS_TYPES = ['新聞', '得獎', '排行榜'];
+  var NEWS_TYPE_KEY = { '新聞': 'news', '得獎': 'award', '排行榜': 'rank' };
+  var NEWS_SCOPES = ['網路小說', '台灣書市', '國際文學獎', '日本輕小說／文學'];
+  var NEWS = ((opts && opts.news) || []).map(function (n, i) { return { n: n, i: i }; })
+    .sort(function (a, b) { return a.n.date < b.n.date ? 1 : a.n.date > b.n.date ? -1 : a.i - b.i; }).map(function (o) { return o.n; });
+  (function checkNews() {
+    var ids = {}, taken = {};
+    REVIEWS.forEach(function (r) { taken[r.id] = 1; });
+    LISTS.forEach(function (l) { taken[l.id] = 1; });
+    NEWS.forEach(function (n) {
+      var who = '書訊 ' + (n.id || '(沒有 id)');
+      if (!/^nws\d{4,}$/.test(n.id || '')) throw new Error(who + '：id 要是 nws 加數字，例如 nws2601。');
+      if (ids[n.id] || taken[n.id]) throw new Error(who + '：id 重複。');
+      ids[n.id] = 1;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(n.date || '')) throw new Error(who + '：日期要是 YYYY-MM-DD。');
+      if (NEWS_TYPES.indexOf(n.type) < 0) throw new Error(who + '：類型只能是 ' + NEWS_TYPES.join('／') + '。');
+      if (n.scope && NEWS_SCOPES.indexOf(n.scope) < 0) throw new Error(who + '：範圍只能是 ' + NEWS_SCOPES.join('／') + '。');
+      if (!n.title || !n.summary) throw new Error(who + '：缺標題或摘要。');
+      if (n.url && !/^https?:\/\//.test(n.url)) throw new Error(who + '：來源網址要以 http 開頭。');
+      (n.related || []).forEach(function (rid) { if (!taken[rid] || !REVIEWS.some(function (r) { return r.id === rid; })) throw new Error(who + '：相關心得 ' + rid + ' 不存在。'); });
+    });
+  })();
+  function newsRow(n, listName, pos) {
+    return '<a class="nrow" href="' + esc(n.id) + '.html" data-id="' + esc(n.id) + '" data-kind="news" data-list="' + listName + '" data-pos="' + pos +
+      '" data-type="' + esc(n.type) + '" data-scope="' + esc(n.scope || '') + '">' +
+      '<time class="row-date" datetime="' + n.date + '">' + n.date.replace(/-/g, '.') + '</time>' +
+      '<span class="ntype ntype-' + NEWS_TYPE_KEY[n.type] + '">' + esc(n.type) + '</span>' +
+      '<span class="row-main"><span class="row-title">' + esc(n.title) + '</span><span class="row-sub nsrc">' + esc([n.scope, n.source].filter(Boolean).join(' · ')) + '</span></span></a>';
+  }
+  var NEWS_NAV = NEWS.length ? '<a href="news.html">書訊</a>' : '';
   var NAV = '<nav><div class="dd"><a href="reviews.html" aria-haspopup="true">心得</a><div class="dd-menu">' +
     '<a href="reviews.html"><b>全部心得</b><small>' + REVIEWS.length + '</small></a>' + LIVE_CATS.map(function (c) {
       return '<a href="' + catHref(c) + '"><b>' + esc(c) + '</b><small>' + countOf(c) + '</small></a>' + liveSubs(c).map(function (s) {
         return '<a class="dd-sub" href="' + catHref(c, s) + '">' + esc(s) + '<small>' + countOf(c, s) + '</small></a>';
       }).join('');
-    }).join('') + '</div></div><a href="lists.html">書單</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>';
+    }).join('') + '</div></div>' + NEWS_NAV + '<a href="lists.html">書單</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>';
   function mapCol(title, links) {   // links = [[網址, 文字], ...]
     return '<div><h3>' + esc(title) + '</h3>' + links.map(function (l) { return '<a href="' + l[0] + '">' + esc(l[1]) + '</a>'; }).join('') + '</div>';
   }
@@ -92,7 +124,7 @@ function buildSite(REVIEWS, opts) {
       return mapCol(c + '類型', liveSubs(c).map(function (s) { return [catHref(c, s), s + '（' + countOf(c, s) + '）']; }));
     }).join('') +
     mapCol('書單', LISTS.map(function (l) { return [l.id + '.html', l.title]; })) +
-    mapCol('網站', [['index.html', '首頁'], ['reviews.html', '全部心得'], ['lists.html', '書單總覽'], ['books.html', '全部的書（總表）'], ['feedback.html', '推薦好書／意見回饋'], ['about.html', '關於']]) + '</nav>';
+    mapCol('網站', [['index.html', '首頁'], ['reviews.html', '全部心得']].concat(NEWS.length ? [['news.html', '書訊']] : [], [['lists.html', '書單總覽'], ['books.html', '全部的書（總表）'], ['feedback.html', '推薦好書／意見回饋'], ['about.html', '關於']])) + '</nav>';
   var FOOT = [
     '  <footer class="site-footer"><div class="wrap">',
     '    <form id="newsletter" novalidate>',
@@ -174,7 +206,7 @@ function buildSite(REVIEWS, opts) {
       '  <meta property="og:image" content="' + BASE + 'assets/og.png">',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261021a">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261021b">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -230,7 +262,7 @@ function buildSite(REVIEWS, opts) {
       '  <meta property="og:image" content="' + BASE + 'assets/og.png">',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261021a">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261021b">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -357,6 +389,59 @@ function buildSite(REVIEWS, opts) {
     c.subs.forEach(function (s) { buildCat(c.name, s); });
   });
 
+  /* 書訊總覽頁與每則書訊頁（有書訊時才產生） */
+  if (NEWS.length) {
+    var typesLive = NEWS_TYPES.filter(function (t) { return NEWS.some(function (n) { return n.type === t; }); });
+    var scopesLive = NEWS_SCOPES.filter(function (t) { return NEWS.some(function (n) { return n.scope === t; }); });
+    files['news.html'] = shell({
+      file: 'news.html', type: 'news', group: '書訊', wide: true,
+      ld: [collectionLd('書訊', 'news.html', '折角 Dogeared 整理的 ' + NEWS.length + ' 則書訊：新聞、得獎、排行榜。',
+        NEWS.map(function (n) { return [n.title, n.id + '.html']; })), crumbLd([['首頁', ''], ['書訊', 'news.html']])],
+      title: '書訊：新聞、得獎與排行榜',
+      desc: '折角 Dogeared 整理的 ' + NEWS.length + ' 則書訊：' + typesLive.join('、') + '，依發布日期由新到舊。',
+      main: [
+        '    <nav class="crumb"><a href="index.html">首頁</a> / 書訊</nav>',
+        '    <h1>書訊</h1>',
+        '    <p class="meta">共 ' + NEWS.length + ' 則。</p>',
+        '    <div id="news-types" class="chips" role="group" aria-label="類型篩選"><button type="button" class="chip active" data-type="">全部 <small>' + NEWS.length + '</small></button>' +
+          typesLive.map(function (t) { return '<button type="button" class="chip" data-type="' + t + '">' + t + ' <small>' + NEWS.filter(function (n) { return n.type === t; }).length + '</small></button>'; }).join('') + '</div>',
+        scopesLive.length > 1 ? '    <div id="news-scopes" class="chips subchips" role="group" aria-label="範圍篩選"><button type="button" class="chip chip-sub active" data-scope="">全部範圍</button>' +
+          scopesLive.map(function (t) { return '<button type="button" class="chip chip-sub" data-scope="' + t + '">' + t + '</button>'; }).join('') + '</div>' : '',
+        '    <div id="news-list" class="rows">',
+        NEWS.map(function (n, i) { return '      ' + newsRow(n, 'news_list', i + 1); }).join('\n'),
+        '    </div>',
+        '    <p id="news-empty" class="empty" hidden>這個條件下沒有書訊。</p>'
+      ].join('\n')
+    });
+    NEWS.forEach(function (n, idx) {
+      var file = n.id + '.html';
+      var rel = (n.related || []).map(byId);
+      var others = NEWS.filter(function (x) { return x.id !== n.id; }).slice(0, 4);
+      files[file] = shell({
+        file: file, type: 'news_article', group: '書訊',
+        ld: [{ '@context': 'https://schema.org', '@type': 'Article', headline: n.title, description: n.summary, url: BASE + file, mainEntityOfPage: BASE + file,
+          datePublished: n.date, inLanguage: 'zh-Hant-TW', image: BASE + 'assets/og.png', articleSection: n.type,
+          author: { '@type': 'Organization', name: '折角 Dogeared', url: BASE }, publisher: { '@type': 'Organization', name: '折角 Dogeared', url: BASE } },
+          crumbLd([['首頁', ''], ['書訊', 'news.html'], [n.title, file]])],
+        title: n.title,
+        desc: n.summary,
+        main: [
+          '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="news.html">書訊</a> / ' + esc(n.type) + '</nav>',
+          '    <article class="news-article" data-news-id="' + esc(n.id) + '">',
+          '      <p class="news-meta"><span class="ntype ntype-' + NEWS_TYPE_KEY[n.type] + '">' + esc(n.type) + '</span><time datetime="' + n.date + '">' + n.date.replace(/-/g, '.') + '</time>' +
+            [n.scope, n.source].filter(Boolean).map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</p>',
+          '      <h1>' + esc(n.title) + '</h1>',
+          '      <p class="lead">' + esc(n.summary) + '</p>',
+          bodyHtml(n.body || []).map(function (x) { return '      ' + x; }).join('\n'),
+          n.url ? '      <p class="news-source">原始來源：<a href="' + esc(n.url) + '" target="_blank" rel="noopener nofollow">' + esc(n.source || n.url) + ' ↗</a></p>' : '',
+          '    </article>',
+          rel.length ? '    <section class="related"><h2>相關心得</h2><div class="rows">' + rowList(rel, 'news_related').join('') + '</div></section>' : '',
+          others.length ? '    <section class="related"><h2>其他書訊</h2><div class="rows">' + others.map(function (x, i) { return newsRow(x, 'news_more', i + 1); }).join('') + '</div></section>' : ''
+        ].filter(Boolean).join('\n')
+      });
+    });
+  }
+
   /* 書單總覽頁：列出所有書單 */
   files['lists.html'] = shell({
     file: 'lists.html', type: 'lists', group: '書單',
@@ -379,7 +464,9 @@ function buildSite(REVIEWS, opts) {
     .concat(catPages.map(function (f) { return { loc: BASE + f, lastmod: TODAY }; }))
     .concat(REVIEWS.map(function (r) { return { loc: BASE + r.id + '.html', lastmod: r.date }; }))
     .concat([{ loc: BASE + 'books.html', lastmod: TODAY }])
-    .concat(LISTS.map(function (l) { return { loc: BASE + l.id + '.html', lastmod: l.date }; }));
+    .concat(LISTS.map(function (l) { return { loc: BASE + l.id + '.html', lastmod: l.date }; }))
+    .concat(NEWS.length ? [{ loc: BASE + 'news.html', lastmod: TODAY }] : [])
+    .concat(NEWS.map(function (n) { return { loc: BASE + n.id + '.html', lastmod: n.date }; }));
   files['sitemap.xml'] = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     urls.map(function (u) { return '  <url><loc>' + u.loc + '</loc><lastmod>' + u.lastmod + '</lastmod></url>'; }).join('\n') +
     '\n</urlset>\n';
@@ -418,6 +505,9 @@ function buildSite(REVIEWS, opts) {
           key.indexOf('cat:') === 0 ? REVIEWS.filter(function (r) { return r.category === key.slice(4); }).length : m.slice(head.length));
       });
       s = fill(s, name, 'home-latest', rowList(REVIEWS.slice(0, 8), 'home_latest'));
+      need(/<section class="start" id="home-news-sec"[^>]*>/.test(s), name, '書訊區塊 #home-news-sec');
+      s = s.replace(/<section class="start" id="home-news-sec"[^>]*>/, '<section class="start" id="home-news-sec" aria-labelledby="news-h"' + (NEWS.length ? '' : ' hidden') + '>');
+      s = fill(s, name, 'home-news', NEWS.slice(0, 4).map(function (n, i) { return newsRow(n, 'home_news', i + 1); }));
       s = fill(s, name, 'home-lists', LISTS.map(function (l) {
         var n = l.sections.reduce(function (a, x) { return a + (x.items || []).length; }, 0);
         return '<a class="list-card" href="' + esc(l.id) + '.html"><b>' + esc(l.title) + '</b><small>' + n + ' 本 · ' + esc(l.date) + '</small></a>';

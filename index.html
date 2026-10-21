@@ -19,7 +19,7 @@
   <meta property="og:image" content="https://dogeared-notes.com/assets/og.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
-  <link rel="stylesheet" href="assets/style.css?v=20261021a">
+  <link rel="stylesheet" href="assets/style.css?v=20261021b">
 </head>
 <body>
   <header class="site-header"><div class="wrap">
@@ -46,6 +46,11 @@
       </div>
     </section>
     <!-- 下面「最新心得」與「書單」的卡片、導覽列的下拉選單、頁尾的網站地圖和各處篇數都由 build/seo-build.js 寫入，不要手改；改完資料後跑 node build/run.js -->
+    <section class="start" id="home-news-sec" aria-labelledby="news-h" hidden>
+      <div class="sec-head"><h2 id="news-h">書訊</h2><a class="more" href="news.html">看全部書訊</a></div>
+      <div id="home-news" class="rows">
+      </div>
+    </section>
     <section class="start" aria-labelledby="latest-h">
       <div class="sec-head"><h2 id="latest-h">最新心得</h2><a class="more" href="reviews.html">看全部 <span data-count="reviews">91</span> 篇</a></div>
       <div id="home-latest" class="rows">
@@ -90,6 +95,6 @@
     <p class="copyright">© 2026 折角 Dogeared · <a href="about.html#privacy">隱私說明</a></p>
   </div></footer>
   <script src="data/reviews.js"></script>
-  <script src="assets/app.js?v=20261021a"></script>
+  <script src="assets/app.js?v=20261021b"></script>
 </body>
 </html>

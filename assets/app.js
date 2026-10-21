@@ -105,6 +105,11 @@
     root.addEventListener('click', function (e) {
       var a = e.target.closest('a[data-list]');
       if (!a) return;
+      if (a.dataset.kind === 'news') {   // 書訊列：content_type = news，另帶 news_type
+        track('select_content', { content_type: 'news', content_id: a.dataset.id, list_name: a.dataset.list,
+          list_position: Number(a.dataset.pos), news_type: a.dataset.type });
+        return;
+      }
       var r = REVIEWS.find(function (x) { return x.id === a.dataset.id; });
       track('select_content', Object.assign({ content_type: 'review', content_id: a.dataset.id,
         list_name: a.dataset.list, list_position: Number(a.dataset.pos) }, r ? { book_category: r.category } : {}));
@@ -478,10 +483,39 @@
     if (sb) { sb.dataset.silent = '1'; sb.click(); }
   }
 
+  /* ================= 書訊總覽頁：依類型、範圍篩選（列表本身是 build 寫好的靜態 HTML） ================= */
+  function initNewsList() {
+    var list = $('#news-list'), types = $('#news-types'), scopes = $('#news-scopes'), empty = $('#news-empty');
+    if (!list || !types) return;
+    var state = { type: '', scope: '' };
+    function apply() {
+      var shown = 0;
+      list.querySelectorAll('.nrow').forEach(function (a) {
+        var ok = (!state.type || a.dataset.type === state.type) && (!state.scope || a.dataset.scope === state.scope);
+        a.hidden = !ok; if (ok) shown += 1;
+      });
+      empty.hidden = shown > 0;
+      var u = new URL(location.href);
+      if (state.type) u.searchParams.set('type', state.type); else u.searchParams.delete('type');
+      if (u.href !== location.href) history.replaceState(null, '', u);
+    }
+    function pick(box, key, b) {
+      box.querySelectorAll('.chip').forEach(function (c) { c.classList.toggle('active', c === b); });
+      state[key] = b.dataset[key]; apply();
+    }
+    types.addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) pick(types, 'type', b); });
+    if (scopes) scopes.addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) pick(scopes, 'scope', b); });
+    var t = new URLSearchParams(location.search).get('type');   // news.html?type=得獎 可直接帶入
+    var hit = t && types.querySelector('.chip[data-type="' + t.replace(/"/g, '') + '"]');
+    if (hit) pick(types, 'type', hit);
+  }
+
   if (page === 'home') initHome();
   if (page === 'reviews') { initReviewsList(); applyCatParam(); }
   if (page === 'review') initReview();
-  if (page === 'list' || page === 'books' || page === 'category') bindCardClicks($('main'));
+  if (page === 'news') initNewsList();
+  if (page === 'list' || page === 'books' || page === 'category' || page === 'news' || page === 'news_article') bindCardClicks($('main'));
+  if (page === 'home' && $('#home-news')) bindCardClicks($('#home-news'));
 
   /* 導覽列下拉選單與頁尾網站地圖：全站共用（只列有心得的分類）。
    * 正式頁面已由 build/seo-build.js 把這兩塊寫進 HTML，內容與順序兩邊要一致；
@@ -515,7 +549,7 @@
           return col(esc(c) + '類型', liveSubs(c).map(function (x) { return a(catHref(c, x), x + '（' + countOf(c, x) + '）'); }));
         }).join('') +
         col('書單', (window.LISTS || []).map(function (l) { return a(l.id + '.html', l.title); })) +
-        col('網站', [a('index.html', '首頁'), a('reviews.html', '全部心得'), a('lists.html', '書單總覽'), a('books.html', '全部的書（總表）'), a('feedback.html', '推薦好書／意見回饋'), a('about.html', '關於')]);
+        col('網站', [a('index.html', '首頁'), a('reviews.html', '全部心得')].concat((window.NEWS || []).length ? [a('news.html', '書訊')] : [], [a('lists.html', '書單總覽'), a('books.html', '全部的書（總表）'), a('feedback.html', '推薦好書／意見回饋'), a('about.html', '關於')]));
       foot.parentNode.insertBefore(map, foot);
     }
   }

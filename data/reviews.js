@@ -4347,3 +4347,7 @@ window.LISTS = [
     "outro": []
   }
 ];
+
+/* 書訊（新聞／得獎／排行榜）。欄位：id（nws 加數字）、date、type（新聞／得獎／排行榜）、scope（網路小說／台灣書市／國際文學獎／日本輕小說／文學，可省略）、
+ * title、source、url、summary、body（段落陣列，可省略）、related（相關心得 id 陣列，可省略）。空陣列時網站不顯示書訊。 */
+window.NEWS = [];

@@ -319,7 +319,7 @@
       newSrc = serialize(list);
       var check = evalData(newSrc);
       if (check.REVIEWS.length !== list.length || !check.CATEGORIES || !check.STORES) throw new Error('產生的資料檔驗證失敗，未發布。');
-      files = buildSite(list, { today: today(), lists: check.LISTS || [], categories: check.CATEGORIES, subcategories: check.SUBCATEGORIES || {}, pages: pagesSrc });
+      files = buildSite(list, { today: today(), lists: check.LISTS || [], news: check.NEWS || [], categories: check.CATEGORIES, subcategories: check.SUBCATEGORIES || {}, pages: pagesSrc });
     } catch (e) { status(esc(e.message), true); return; }
     var tree = [{ path: 'data/reviews.js', mode: '100644', type: 'blob', content: newSrc }];
     Object.keys(files).forEach(function (name) { tree.push({ path: name, mode: '100644', type: 'blob', content: files[name] }); });
