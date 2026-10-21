@@ -7,9 +7,9 @@
 function buildSite(REVIEWS, opts) {
   var BASE = (opts && opts.base) || 'https://dogeared-notes.com/';
   var TODAY = (opts && opts.today) || new Date().toISOString().slice(0, 10);
-  /* Google AdSense 發布商 ID（2026-10-22）：每一頁的 <head> 加驗證用 meta，根目錄產生 ads.txt。設成空字串就全部拿掉。
+  /* Google AdSense 發布商 ID（2026-10-22 改為個人帳戶的 ID）：每一頁的 <head> 加驗證用 meta，根目錄產生 ads.txt。設成空字串就全部拿掉。
    * 廣告版位另外由 app.js 控制，這裡只負責網站驗證與 ads.txt。 */
-  var ADSENSE_PUB = (opts && opts.adsensePub !== undefined) ? opts.adsensePub : 'ca-pub-6909935015327096';
+  var ADSENSE_PUB = (opts && opts.adsensePub !== undefined) ? opts.adsensePub : 'ca-pub-3634341941601249';
   var ADS_META = ADSENSE_PUB ? '  <meta name="google-adsense-account" content="' + ADSENSE_PUB + '">' : '';
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
