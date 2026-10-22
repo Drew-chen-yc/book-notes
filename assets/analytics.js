@@ -38,6 +38,22 @@
   var consent = safeGet(CONSENT_KEY);
   if (consent === 'all') gtag('consent', 'update', GRANTED);
 
+  /* ---------- 1b. 內部流量標記（2026-10-22）：網站管理者的裝置不算進報表 ----------
+   * 任何頁面網址加 ?bn_internal=1 開一次，這台裝置之後送出的事件都帶 traffic_type=internal，
+   * 由 GA4「管理 → 資料篩選器 → Internal Traffic」排除；?bn_internal=0 取消。不用 IP 規則，因為手機、iPad、家裡與公司 IP 都不同。 */
+  var INTERNAL_KEY = 'bn_internal';
+  try {
+    var iq = new URLSearchParams(location.search), iv = iq.get('bn_internal');
+    if (iv === '1' || iv === '0') {
+      safeSet(INTERNAL_KEY, iv);
+      iq.delete('bn_internal');
+      var irest = iq.toString();
+      history.replaceState(null, '', location.pathname + (irest ? '?' + irest : '') + location.hash);
+    }
+  } catch (e) {}
+  var INTERNAL = safeGet(INTERNAL_KEY) === '1';
+  if (INTERNAL) gtag('set', { traffic_type: 'internal' });
+
   /* ---------- 2. 讀者輪廓 → GA4 使用者屬性（用來切廣告受眾） ---------- */
   function loadProfile() {
     var p;
@@ -81,6 +97,7 @@
   /* ---------- 3. 頁面脈絡：在 GTM 載入前推入，Google 代碼可讀到 ---------- */
   var body = document.documentElement;
   window.dataLayer.push({
+    traffic_type: INTERNAL ? 'internal' : undefined,
     page_type: body.getAttribute('data-page-type') || 'other',
     content_group: body.getAttribute('data-content-group') || 'other',
     user_properties: userProperties()
