@@ -25,7 +25,7 @@ function buildSite(REVIEWS, opts) {
   }
   function itemListLd(rows) {   // rows = [[名稱, 檔名], ...]
     return { '@type': 'ItemList', numberOfItems: rows.length, itemListElement: rows.map(function (x, i) {
-      return { '@type': 'ListItem', position: i + 1, name: x[0], url: BASE + x[1] };
+      return x[1] ? { '@type': 'ListItem', position: i + 1, name: x[0], url: BASE + x[1] } : { '@type': 'ListItem', position: i + 1, name: x[0] };
     }) };
   }
   function collectionLd(name, file, desc, rows) {
@@ -327,6 +327,7 @@ function buildSite(REVIEWS, opts) {
         mainEntityOfPage: BASE + l.id + '.html', datePublished: l.date, dateModified: listDate(l), inLanguage: 'zh-Hant-TW', image: BASE + 'assets/og.png',
         author: { '@type': 'Organization', name: '折角 Dogeared', url: BASE }, publisher: { '@type': 'Organization', name: '折角 Dogeared', url: BASE },
         mainEntity: itemListLd(l.sections.reduce(function (a, sec) { return a.concat(sec.items || []); }, []).map(function (it) {
+          if (!it.id) return ['《' + it.title + '》', ''];   // 還沒寫心得的書：只列名稱，不連結
           var b = byId(it.id); return ['《' + (b ? b.title : it.id) + '》', it.id + '.html'];
         })) }, crumbLd([['首頁', ''], ['書單', 'lists.html'], [l.title, l.id + '.html']])],
       main: [
@@ -336,6 +337,10 @@ function buildSite(REVIEWS, opts) {
         (l.intro || []).map(para).join('\n'),
         l.sections.map(function (s) {
           return (s.heading ? ['    <h2>' + esc(s.heading) + '</h2>'] : []).concat((s.paras || []).map(para), (s.items || []).map(function (it) {
+            if (!it.id) {   // 還沒寫心得的書（title、author、rating 可省略、note）：不連結，有評分才顯示印章
+              return '    <div class="pick pick-plain"><h3>《' + esc(it.title) + '》' + (it.rating ? ' ' + seal(it.rating, 'xs') : '') + '</h3>' +
+                '<p class="meta">' + esc(it.author || '') + (it.tag ? ' · ' + esc(it.tag) : '') + '</p><p>' + esc(it.note) + '</p></div>';
+            }
             var r = byId(it.id);
             if (!r) throw new Error('書單 ' + l.id + ' 找不到心得 ' + it.id);
             pos += 1;

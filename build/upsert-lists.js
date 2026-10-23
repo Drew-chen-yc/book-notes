@@ -27,7 +27,8 @@ for (const l of incoming) {
   if (all.includes('——')) fail(l.id + ' 有破折號「——」');
   if (/暫定|暫給/.test(all)) fail(l.id + ' 出現「暫定」字樣，評分一律不標暫定');
   for (const s of l.sections) for (const it of (s.items || [])) {
-    if (!ids.has(it.id)) fail(l.id + ' 找不到心得 ' + it.id);
+    if (!it.id) { if (!it.title) fail(l.id + ' 有一張書卡沒有 id 也沒有 title'); }
+    else if (!ids.has(it.id)) fail(l.id + ' 找不到心得 ' + it.id);
     if (!it.note) fail(l.id + ' 的 ' + it.id + ' 沒有短評');
   }
   const i = lists.findIndex(x => x.id === l.id);
