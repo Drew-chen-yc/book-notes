@@ -119,6 +119,11 @@
   /* ================= 首頁：導覽用，只放最新 6 篇與書單 =================
    * 最新 6 篇與書單卡片已由 build/seo-build.js 寫進 index.html（搜尋引擎不跑程式也讀得到）。
    * 這裡只在頁面上還沒有內容時才畫（舊版頁面的備援），或預覽環境改用 #id 連結時重畫。 */
+  /* 書單依更新日（updated，沒有就用 date）由新到舊；和 build/seo-build.js 的 LISTS_NEW 一致 */
+  function newestLists() {
+    var d = function (l) { return l.updated || l.date; };
+    return (window.LISTS || []).slice().sort(function (x, y) { return d(x) < d(y) ? 1 : d(x) > d(y) ? -1 : 0; });
+  }
   function initHome() {
     document.querySelectorAll('[data-count]').forEach(function (el) {
       var k = el.dataset.count;
@@ -133,7 +138,7 @@
     }
     var hl = $('#home-lists');
     if (hl && (redraw || !hl.children.length)) {
-      hl.innerHTML = (window.LISTS || []).map(function (l) {
+      hl.innerHTML = newestLists().slice(0, 6).map(function (l) {
         var n = l.sections.reduce(function (a, x) { return a + (x.items || []).length; }, 0);
         return '<a class="list-card" href="' + esc(l.id) + '.html"><b>' + esc(l.title) + '</b><small>' + n + ' 本 · ' + esc(l.date) + '</small></a>';
       }).join('');
@@ -548,7 +553,7 @@
         liveCats().filter(function (c) { return liveSubs(c).length; }).map(function (c) {
           return col(esc(c) + '類型', liveSubs(c).map(function (x) { return a(catHref(c, x), x + '（' + countOf(c, x) + '）'); }));
         }).join('') +
-        col('書單', (window.LISTS || []).map(function (l) { return a(l.id + '.html', l.title); })) +
+        col('書單', newestLists().slice(0, 6).map(function (l) { return a(l.id + '.html', l.title); }).concat((window.LISTS || []).length > 6 ? [a('lists.html', '全部 ' + window.LISTS.length + ' 份書單')] : [])) +
         col('網站', [a('index.html', '首頁'), a('reviews.html', '全部心得')].concat((window.NEWS || []).length ? [a('news.html', '書訊')] : [], [a('lists.html', '書單總覽'), a('books.html', '全部的書（總表）'), a('feedback.html', '推薦好書／意見回饋'), a('about.html', '關於')]));
       foot.parentNode.insertBefore(map, foot);
     }

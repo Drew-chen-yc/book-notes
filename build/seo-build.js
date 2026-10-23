@@ -62,13 +62,17 @@ function buildSite(REVIEWS, opts) {
   }
   /* 分類頁網址：cat-<分類>.html、cat-<分類>-<子分類>.html（build/seo-build.js 與 assets/app.js 各有一份，要同步） */
   var LISTS = (opts && opts.lists) || [];
+  /* 書單類型（window.LISTS 每篇的 type 欄位）：書單總覽依這個順序分組；沒填的歸「其他書單」 */
+  var LIST_TYPES = ['分類推薦', '主題書單', '比較', '作者與系列', '入門與指南', '年度回顧'];
+  function listDate(l) { return l.updated || l.date; }
+  var LISTS_NEW = LISTS.slice().sort(function (a, b) { return listDate(a) < listDate(b) ? 1 : listDate(a) > listDate(b) ? -1 : 0; });   // 新的在前
   var CAT_SLUG = { '小說': 'novel', '自我成長': 'self-growth', '心理學': 'psychology', '人文社科': 'humanities', '歷史': 'history', '投資理財': 'investing' };
   var SUB_SLUG = { '仙俠': 'xianxia', '玄幻': 'xuanhuan', '奇幻': 'fantasy', '科幻': 'scifi', '推理': 'mystery', '懸疑': 'suspense', '文學': 'literary', '歷史': 'historical', '愛情': 'romance', '翻譯': 'translated', '其他': 'other' };
   function catHref(cat, sub) { return 'cat-' + CAT_SLUG[cat] + (sub ? '-' + SUB_SLUG[sub] : '') + '.html'; }
   /* 導覽列下拉選單與頁尾網站地圖：直接寫進每一頁的 HTML，搜尋引擎不必執行程式就讀得到所有分類頁與書單的連結。
    * 內容與順序要和 assets/app.js 的 initSiteNav() 一致（那邊只在頁面沒有這兩塊時才動態補上）。
    * 分類順序依 data/reviews.js 的 CATEGORIES、SUBCATEGORIES（opts.categories、opts.subcategories），只列有心得的。 */
-  var APP_VER = '20261021b';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
+  var APP_VER = '20261023a';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
   function countOf(cat, sub) { return REVIEWS.filter(function (r) { return r.category === cat && (!sub || r.subcategory === sub); }).length; }
   function uniq(list) { return list.filter(function (x, i) { return x && list.indexOf(x) === i; }); }
   var LIVE_CATS = ((opts && opts.categories) || uniq(REVIEWS.map(function (r) { return r.category; })))
@@ -123,7 +127,7 @@ function buildSite(REVIEWS, opts) {
     LIVE_CATS.filter(function (c) { return liveSubs(c).length; }).map(function (c) {
       return mapCol(c + '類型', liveSubs(c).map(function (s) { return [catHref(c, s), s + '（' + countOf(c, s) + '）']; }));
     }).join('') +
-    mapCol('書單', LISTS.map(function (l) { return [l.id + '.html', l.title]; })) +
+    mapCol('書單', LISTS_NEW.slice(0, 6).map(function (l) { return [l.id + '.html', l.title]; }).concat(LISTS.length > 6 ? [['lists.html', '全部 ' + LISTS.length + ' 份書單']] : [])) +
     mapCol('網站', [['index.html', '首頁'], ['reviews.html', '全部心得']].concat(NEWS.length ? [['news.html', '書訊']] : [], [['lists.html', '書單總覽'], ['books.html', '全部的書（總表）'], ['feedback.html', '推薦好書／意見回饋'], ['about.html', '關於']])) + '</nav>';
   var FOOT = [
     '  <footer class="site-footer"><div class="wrap">',
@@ -304,7 +308,7 @@ function buildSite(REVIEWS, opts) {
     main: [
       '    <h1>全部的書</h1>',
       '    <p class="meta">共 ' + REVIEWS.length + ' 本，依評分排序，滿分 5 顆星。點書名看完整心得。</p>',
-      LISTS.length ? '    <p class="quick">書單：' + LISTS.map(listLink).join('') + '</p>' : '',
+      LISTS.length ? '    <p class="quick">書單：' + LISTS_NEW.slice(0, 8).map(listLink).join('') + (LISTS.length > 8 ? '<a href="lists.html">全部書單</a>' : '') + '</p>' : '',
       '    <table class="books"><thead><tr><th>書名</th><th>類型</th><th>評分</th><th>一句話</th></tr></thead><tbody>',
       sorted.map(function (r, i) {
         return '      <tr><td><a href="' + esc(r.id) + '.html" data-id="' + esc(r.id) + '" data-list="all_books" data-pos="' + (i + 1) + '">《' + esc(r.title) + '》</a><br><small>' + esc(r.author) + '</small></td>' +
@@ -320,7 +324,7 @@ function buildSite(REVIEWS, opts) {
     files[l.id + '.html'] = shell({
       file: l.id + '.html', type: 'list', group: '書單', title: l.title, desc: l.description,
       ld: [{ '@context': 'https://schema.org', '@type': 'Article', headline: l.title, description: l.description, url: BASE + l.id + '.html',
-        mainEntityOfPage: BASE + l.id + '.html', datePublished: l.date, inLanguage: 'zh-Hant-TW', image: BASE + 'assets/og.png',
+        mainEntityOfPage: BASE + l.id + '.html', datePublished: l.date, dateModified: listDate(l), inLanguage: 'zh-Hant-TW', image: BASE + 'assets/og.png',
         author: { '@type': 'Organization', name: '折角 Dogeared', url: BASE }, publisher: { '@type': 'Organization', name: '折角 Dogeared', url: BASE },
         mainEntity: itemListLd(l.sections.reduce(function (a, sec) { return a.concat(sec.items || []); }, []).map(function (it) {
           var b = byId(it.id); return ['《' + (b ? b.title : it.id) + '》', it.id + '.html'];
@@ -328,7 +332,7 @@ function buildSite(REVIEWS, opts) {
       main: [
         '    <nav class="crumb"><a href="index.html">首頁</a> / <a href="lists.html">書單</a></nav>',
         '    <h1>' + esc(l.title) + '</h1>',
-        '    <p class="meta">' + l.date + '</p>',
+        '    <p class="meta">' + l.date + (l.updated && l.updated !== l.date ? '・更新 ' + l.updated : '') + (l.type ? '・' + esc(l.type) : '') + '</p>',
         (l.intro || []).map(para).join('\n'),
         l.sections.map(function (s) {
           return (s.heading ? ['    <h2>' + esc(s.heading) + '</h2>'] : []).concat((s.paras || []).map(para), (s.items || []).map(function (it) {
@@ -342,7 +346,9 @@ function buildSite(REVIEWS, opts) {
         }).join('\n'),
         (l.outro || []).map(para).join('\n'),
         '    <section class="related"><h2>繼續看</h2><ul>',
-        LISTS.filter(function (x) { return x.id !== l.id; }).map(function (x) { return '      <li>' + listLink(x) + '</li>'; }).join('\n'),
+        LISTS_NEW.filter(function (x) { return x.id !== l.id && x.type && x.type === l.type; }).concat(LISTS_NEW.filter(function (x) { return x.id !== l.id && !(x.type && x.type === l.type); }))
+          .slice(0, 6).map(function (x) { return '      <li>' + listLink(x) + '</li>'; }).join('\n'),
+        LISTS.length > 7 ? '      <li><a href="lists.html">全部 ' + LISTS.length + ' 份書單</a></li>' : '',
         '      <li><a href="books.html">全部的書（總表）</a></li>',
         '    </ul></section>'
       ].join('\n')
@@ -452,10 +458,14 @@ function buildSite(REVIEWS, opts) {
     main: [
       '    <h1>書單</h1>',
       '    <p class="meta">共 ' + LISTS.length + ' 份，把讀過的書依主題整理。</p>',
-      LISTS.map(function (l) {
-        var n = l.sections.reduce(function (a, s) { return a + (s.items || []).length; }, 0);
-        return '    <a class="list-card" href="' + esc(l.id) + '.html"><b>' + esc(l.title) + '</b><span>' + esc(l.description) + '</span><small>' + n + ' 本 · ' + l.date + '</small></a>';
-      }).join('\n')
+      LIST_TYPES.concat(['其他書單']).map(function (t) {
+        var g = LISTS_NEW.filter(function (l) { return (LIST_TYPES.indexOf(l.type) < 0 ? '其他書單' : l.type) === t; });
+        if (!g.length) return '';
+        return '    <h2>' + esc(t) + '</h2>\n' + g.map(function (l) {
+          var n = l.sections.reduce(function (a, s) { return a + (s.items || []).length; }, 0);
+          return '    <a class="list-card" href="' + esc(l.id) + '.html"><b>' + esc(l.title) + '</b><span>' + esc(l.description) + '</span><small>' + n + ' 本 · ' + listDate(l) + '</small></a>';
+        }).join('\n');
+      }).filter(Boolean).join('\n')
     ].join('\n')
   });
 
@@ -464,7 +474,7 @@ function buildSite(REVIEWS, opts) {
     .concat(catPages.map(function (f) { return { loc: BASE + f, lastmod: TODAY }; }))
     .concat(REVIEWS.map(function (r) { return { loc: BASE + r.id + '.html', lastmod: r.date }; }))
     .concat([{ loc: BASE + 'books.html', lastmod: TODAY }])
-    .concat(LISTS.map(function (l) { return { loc: BASE + l.id + '.html', lastmod: l.date }; }))
+    .concat(LISTS.map(function (l) { return { loc: BASE + l.id + '.html', lastmod: listDate(l) }; }))
     .concat(NEWS.length ? [{ loc: BASE + 'news.html', lastmod: TODAY }] : [])
     .concat(NEWS.map(function (n) { return { loc: BASE + n.id + '.html', lastmod: n.date }; }));
   files['sitemap.xml'] = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
@@ -508,9 +518,9 @@ function buildSite(REVIEWS, opts) {
       need(/<section class="start" id="home-news-sec"[^>]*>/.test(s), name, '書訊區塊 #home-news-sec');
       s = s.replace(/<section class="start" id="home-news-sec"[^>]*>/, '<section class="start" id="home-news-sec" aria-labelledby="news-h"' + (NEWS.length ? '' : ' hidden') + '>');
       s = fill(s, name, 'home-news', NEWS.slice(0, 4).map(function (n, i) { return newsRow(n, 'home_news', i + 1); }));
-      s = fill(s, name, 'home-lists', LISTS.map(function (l) {
+      s = fill(s, name, 'home-lists', LISTS_NEW.slice(0, 6).map(function (l) {
         var n = l.sections.reduce(function (a, x) { return a + (x.items || []).length; }, 0);
-        return '<a class="list-card" href="' + esc(l.id) + '.html"><b>' + esc(l.title) + '</b><small>' + n + ' 本 · ' + esc(l.date) + '</small></a>';
+        return '<a class="list-card" href="' + esc(l.id) + '.html"><b>' + esc(l.title) + '</b><small>' + n + ' 本 · ' + esc(listDate(l)) + '</small></a>';
       }));
     }
     files[name] = s;
