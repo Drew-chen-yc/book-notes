@@ -522,6 +522,8 @@ function buildSite(REVIEWS, opts) {
       s = fill(s, name, 'home-latest', rowList(REVIEWS.slice(0, 8), 'home_latest'));
       need(/<section class="start" id="home-news-sec"[^>]*>/.test(s), name, '書訊區塊 #home-news-sec');
       s = s.replace(/<section class="start" id="home-news-sec"[^>]*>/, '<section class="start" id="home-news-sec" aria-labelledby="news-h"' + (NEWS.length ? '' : ' hidden') + '>');
+      // 沒有書訊時，「看全部書訊」不留 href：區塊雖然 hidden，Google 仍會抓到連結，news.html 不存在會被報 404
+      s = s.replace(/<a class="more"[^>]*>看全部書訊<\/a>/, NEWS.length ? '<a class="more" href="news.html">看全部書訊</a>' : '<a class="more">看全部書訊</a>');
       s = fill(s, name, 'home-news', NEWS.slice(0, 4).map(function (n, i) { return newsRow(n, 'home_news', i + 1); }));
       s = fill(s, name, 'home-lists', LISTS_NEW.slice(0, 6).map(function (l) {
         var n = l.sections.reduce(function (a, x) { return a + (x.items || []).length; }, 0);
