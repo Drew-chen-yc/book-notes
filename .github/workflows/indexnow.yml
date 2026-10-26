@@ -1,0 +1,35 @@
+# 每次推到 main：等 GitHub Pages 部署完，用 IndexNow 通知 Bing 有哪些網頁新增或更新。
+# 手動執行（Actions → IndexNow → Run workflow，勾「all」）可以一次送出 sitemap 全部網址。
+name: IndexNow
+on:
+  push:
+    branches: [main]
+    paths: ['*.html', 'sitemap.xml']
+  workflow_dispatch:
+    inputs:
+      all:
+        description: '送出 sitemap.xml 全部網址'
+        type: boolean
+        default: false
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 等 GitHub Pages 部署完成
+        run: sleep 150
+      - name: 確認金鑰檔已上線
+        run: |
+          KEY=$(ls | grep -E '^[0-9a-f]{32}\.txt$' | head -1)
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS "https://dogeared-notes.com/$KEY" | grep -q "${KEY%.txt}"; then echo "金鑰檔已上線"; exit 0; fi
+            sleep 30
+          done
+          echo "金鑰檔還沒上線"; exit 1
+      - name: 通知 IndexNow
+        run: node build/indexnow.js ${{ (github.event_name == 'workflow_dispatch' && inputs.all) && '--all' || '' }}
