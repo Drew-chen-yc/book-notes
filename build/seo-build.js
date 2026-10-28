@@ -48,6 +48,34 @@ function buildSite(REVIEWS, opts) {
       return { x: x, i: i, s: (x.category === r.category ? 4 : 0) + (r.subcategory && x.subcategory === r.subcategory ? 2 : 0) + ((x.category === '小說') === (r.category === '小說') ? 1 : 0) };
     }).sort(function (a, b) { return b.s - a.s || a.i - b.i; }).slice(0, n).map(function (o) { return o.x; });
   }
+  /* 重雷心得（data/spoilers.js 的 window.SPOILERS，經 opts.spoilers 傳入；前台不載入這個檔）：
+   * 每篇對應一篇無雷心得（id 相同），輸出 <id>-spoiler.html。無雷心得頁底部只在有重雷心得時才出現連結。
+   * 欄位：id、date（上架日）、updated（改寫日，選填）、progress（連載中的書寫到哪，選填）、hook（標題後半句的問題）、summary（一句話結論）、body（同心得 body 規則） */
+  var SPOILERS = {};
+  ((opts && opts.spoilers) || []).forEach(function (sp) {
+    var who = '重雷心得 ' + (sp.id || '(沒有 id)');
+    var r = null;
+    for (var i = 0; i < REVIEWS.length; i++) if (REVIEWS[i].id === sp.id) r = REVIEWS[i];
+    if (!r) throw new Error(who + '：找不到對應的無雷心得。');
+    if (SPOILERS[sp.id]) throw new Error(who + '：重複。');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(sp.date || '') || (sp.updated && !/^\d{4}-\d{2}-\d{2}$/.test(sp.updated))) throw new Error(who + '：日期要是 YYYY-MM-DD。');
+    if (!sp.hook || !sp.summary || !(sp.body || []).length) throw new Error(who + '：缺 hook、summary 或 body。');
+    if (/——/.test(sp.summary + sp.body.join(''))) throw new Error(who + '：不用破折號「——」。');
+    SPOILERS[sp.id] = sp;
+  });
+  function spoilerFile(r) { return r.id + '-spoiler.html'; }
+  function spoilerH1(r) { return '《' + r.title + '》結局解析與重雷心得'; }
+  function spoilerTitle(r, sp) { return '《' + r.title + '》結局解析：' + sp.hook + '（重雷心得）｜折角 Dogeared'; }
+  function spoilerDate(sp) { return sp.updated || sp.date; }
+  function reviewMod(r) { var sp = SPOILERS[r.id]; return [r.updated || r.date].concat(sp ? [spoilerDate(sp)] : []).sort().pop(); }
+  function spoilerCta(r) {
+    var sp = SPOILERS[r.id];
+    if (!sp) return '';
+    return '    <section class="spoiler-cta" aria-labelledby="spoiler-h"><h2 id="spoiler-h">讀完了？看重雷心得</h2>' +
+      '<p>無雷心得只能講到這裡。結局、伏筆和我真正想聊的部分，寫在重雷心得：</p>' +
+      '<p><a class="spoiler-link" href="' + spoilerFile(r) + '" data-id="' + esc(r.id) + '" data-kind="spoiler" data-list="review_spoiler_cta" data-pos="1">' + esc(spoilerH1(r)) + '</a></p>' +
+      '<p class="meta">內含完整劇情與結局。' + (sp.progress ? '寫到' + esc(sp.progress) + '。' : '') + '</p></section>';
+  }
   function bodyHtml(body) {   // 「## 」小標題、「### 」次標題、連續的「- 」條列
     var out = [], li = [];
     function flush() { if (li.length) { out.push('<ul>' + li.join('') + '</ul>'); li = []; } }
@@ -72,7 +100,7 @@ function buildSite(REVIEWS, opts) {
   /* 導覽列下拉選單與頁尾網站地圖：直接寫進每一頁的 HTML，搜尋引擎不必執行程式就讀得到所有分類頁與書單的連結。
    * 內容與順序要和 assets/app.js 的 initSiteNav() 一致（那邊只在頁面沒有這兩塊時才動態補上）。
    * 分類順序依 data/reviews.js 的 CATEGORIES、SUBCATEGORIES（opts.categories、opts.subcategories），只列有心得的。 */
-  var APP_VER = '20261023a';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
+  var APP_VER = '20261029a';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
   function countOf(cat, sub) { return REVIEWS.filter(function (r) { return r.category === cat && (!sub || r.subcategory === sub); }).length; }
   function uniq(list) { return list.filter(function (x, i) { return x && list.indexOf(x) === i; }); }
   var LIVE_CATS = ((opts && opts.categories) || uniq(REVIEWS.map(function (r) { return r.category; })))
@@ -131,20 +159,6 @@ function buildSite(REVIEWS, opts) {
     mapCol('網站', [['index.html', '首頁'], ['reviews.html', '全部心得']].concat(NEWS.length ? [['news.html', '書訊']] : [], [['lists.html', '書單總覽'], ['books.html', '全部的書（總表）'], ['feedback.html', '推薦好書／意見回饋'], ['about.html', '關於']])) + '</nav>';
   var FOOT = [
     '  <footer class="site-footer"><div class="wrap">',
-    '    <form id="newsletter" novalidate>',
-    '      <h2>每月一封新心得</h2>',
-    '      <p>不寄廣告，只寄這個月讀完的書。</p>',
-    '      <div class="form-row">',
-    '        <label class="sr-only" for="email">Email</label>',
-    '        <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>',
-    '        <label class="sr-only" for="interest">感興趣的分類</label>',
-    '        <select id="interest" name="interest">',
-    '          <option value="all">全部分類</option><option value="小說">小說</option><option value="自我成長">自我成長</option><option value="心理學">心理學</option><option value="人文社科">人文社科</option><option value="歷史">歷史</option><option value="投資理財">投資理財</option>',
-    '        </select>',
-    '        <button class="btn" type="submit">訂閱</button>',
-    '      </div>',
-    '      <p class="form-msg" aria-live="polite"></p>',
-    '    </form>',
     '    ' + SITEMAP,
     '    <p class="copyright">© 2026 折角 Dogeared · <a href="about.html#privacy">隱私說明</a></p>',
     '  </div></footer>',
@@ -210,7 +224,7 @@ function buildSite(REVIEWS, opts) {
       '  <meta property="og:image" content="' + BASE + 'assets/og.png">',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261021b">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261029a">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -234,6 +248,7 @@ function buildSite(REVIEWS, opts) {
       name: seoH1(r),
       url: url,
       datePublished: r.date,
+      dateModified: reviewMod(r),
       inLanguage: 'zh-Hant-TW',
       reviewBody: r.summary,
       author: { '@type': 'Organization', name: '折角 Dogeared', url: BASE },
@@ -256,6 +271,7 @@ function buildSite(REVIEWS, opts) {
       '  <meta property="og:description" content="' + esc(desc) + '">',
       '  <meta property="og:url" content="' + url + '">',
       '  <meta property="article:published_time" content="' + r.date + '">',
+      '  <meta property="article:modified_time" content="' + reviewMod(r) + '">',
       '  <meta name="twitter:card" content="summary">',
       ldTag(ld),
       ldTag(crumbLd([['首頁', ''], ['心得', 'reviews.html'], [r.category, catHref(r.category)]]
@@ -266,14 +282,14 @@ function buildSite(REVIEWS, opts) {
       '  <meta property="og:image" content="' + BASE + 'assets/og.png">',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261021b">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261029a">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
       '    <a class="logo" href="index.html">折角<span>Dogeared</span><small>｜讀書心得與推薦</small></a>',
       '    ' + NAV,
       '  </div></header>',
-      '  <main class="wrap narrow" id="review">',
+      '  <main class="wrap narrow" id="review"' + (SPOILERS[r.id] ? ' data-spoiler="' + spoilerFile(r) + '" data-spoiler-title="' + esc(spoilerH1(r)) + '" data-spoiler-progress="' + esc(SPOILERS[r.id].progress || '') + '"' : '') + '>',
       '    ' + crumbOf(r),
       '    <header class="review-head">',
       '      ' + cover(r, 'lg'),
@@ -287,6 +303,7 @@ function buildSite(REVIEWS, opts) {
       bodyHtml(r.body).map(function (x) { return '      ' + x; }).join('\n'),
       '      <p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p>',
       '    </article>',
+      spoilerCta(r),
       '    <section class="related"><h2>同類型心得</h2><ul>',
       rel.map(function (x) { return '      <li><a href="' + esc(x.id) + '.html">' + esc(seoH1(x)) + '</a>（' + esc(x.author) + '）</li>'; }).join('\n'),
       '    </ul></section>',
@@ -294,6 +311,75 @@ function buildSite(REVIEWS, opts) {
       '  </main>',
       FOOT
     ].join('\n');
+  });
+
+  /* 重雷心得頁：<id>-spoiler.html。版面跟心得頁一樣，開頭多一個劇透警告；結構化資料用 Article（評分只放在無雷心得的 Review，避免同一本書兩個評分） */
+  REVIEWS.forEach(function (r) {
+    var sp = SPOILERS[r.id];
+    if (!sp) return;
+    var file = spoilerFile(r), url = BASE + file, h1 = spoilerH1(r), title = spoilerTitle(r, sp);
+    var desc = clip('《' + r.title + '》結局解析（含完整劇透）：' + sp.summary);
+    var mins = Math.max(1, Math.round(sp.body.join('').length / 400));
+    var others = REVIEWS.filter(function (x) { return x.id !== r.id && SPOILERS[x.id]; });
+    others = others.filter(function (x) { return x.subcategory === r.subcategory; }).concat(others.filter(function (x) { return x.subcategory !== r.subcategory; })).slice(0, 4);
+    var ld = { '@context': 'https://schema.org', '@type': 'Article', headline: h1, description: desc, url: url, mainEntityOfPage: url,
+      datePublished: sp.date, dateModified: spoilerDate(sp), inLanguage: 'zh-Hant-TW', image: BASE + 'assets/og.png', articleSection: '重雷心得',
+      about: { '@type': 'Book', name: r.title, author: { '@type': 'Person', name: r.author } },
+      author: { '@type': 'Organization', name: '折角 Dogeared', url: BASE }, publisher: { '@type': 'Organization', name: '折角 Dogeared', url: BASE } };
+    files[file] = [
+      '<!doctype html>',
+      '<html lang="zh-Hant-TW" data-page-type="spoiler" data-content-group="重雷心得" data-review-id="' + esc(r.id) + '">',
+      '<head>',
+      '  <meta charset="utf-8">',
+      '  <meta name="viewport" content="width=device-width, initial-scale=1">' + (ADS_META ? '\n' + ADS_META : ''),
+      '  <title>' + esc(title) + '</title>',
+      '  <meta name="description" content="' + esc(desc) + '">',
+      '  <link rel="canonical" href="' + url + '">',
+      '  <meta property="og:type" content="article">',
+      '  <meta property="og:site_name" content="折角 Dogeared">',
+      '  <meta property="og:title" content="' + esc(h1 + '（含劇透）') + '">',
+      '  <meta property="og:description" content="' + esc('《' + r.title + '》的完整劇情、結局與伏筆解析。還沒讀完的話，先看無雷心得。') + '">',
+      '  <meta property="og:url" content="' + url + '">',
+      '  <meta property="article:published_time" content="' + sp.date + '">',
+      '  <meta property="article:modified_time" content="' + spoilerDate(sp) + '">',
+      '  <meta name="twitter:card" content="summary">',
+      ldTag(ld),
+      ldTag(crumbLd([['首頁', ''], ['心得', 'reviews.html'], [r.category, catHref(r.category)]]
+        .concat(r.subcategory ? [[r.subcategory, catHref(r.category, r.subcategory)]] : [], [[seoH1(r), r.id + '.html'], ['結局解析', file]]))),
+      '  <!-- 追蹤程式必須最先載入：Consent 預設值 → dataLayer 脈絡 → GTM -->',
+      '  <script src="assets/analytics.js"></script>',
+      '  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">',
+      '  <meta property="og:image" content="' + BASE + 'assets/og.png">',
+      '  <link rel="preconnect" href="https://fonts.googleapis.com">',
+      '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261029a">',
+      '</head>',
+      '<body>',
+      '  <header class="site-header"><div class="wrap">',
+      '    <a class="logo" href="index.html">折角<span>Dogeared</span><small>｜讀書心得與推薦</small></a>',
+      '    ' + NAV,
+      '  </div></header>',
+      '  <main class="wrap narrow" id="spoiler">',
+      '    ' + crumbOf(r).replace('</nav>', ' / <a href="' + esc(r.id) + '.html">《' + esc(r.title) + '》心得</a> / 結局解析</nav>'),
+      '    <aside class="spoiler-warn" role="note"><b>這篇有完整劇透。</b>會直接講到結局、反轉和角色下場' + (sp.progress ? '，寫到' + esc(sp.progress) : '') + '。還沒讀的話，先看 <a href="' + esc(r.id) + '.html">無雷心得</a>。</aside>',
+      '    <header class="review-head">',
+      '      ' + cover(r, 'lg'),
+      '      <div><span class="tag tag-spoiler">重雷心得</span><h1>' + esc(h1) + '</h1>',
+      '      <p class="meta">' + esc(r.author) + '</p><p class="rating">' + seal(r.rating, 'lg') + '<span class="stars big" aria-hidden="true">' + stars(r.rating) + '</span></p>',
+      '      <p class="meta">' + sp.date + (sp.updated && sp.updated !== sp.date ? '・更新 ' + sp.updated : '') + ' · 約 ' + mins + ' 分鐘閱讀</p>',
+      '      <p class="lead">' + esc(sp.summary) + '</p></div>',
+      '    </header>',
+      '    <article id="article">',
+      bodyHtml(sp.body).map(function (x) { return '      ' + x; }).join('\n'),
+      '    </article>',
+      '    <section class="related"><h2>繼續看</h2><ul>',
+      '      <li><a href="' + esc(r.id) + '.html" data-id="' + esc(r.id) + '" data-list="spoiler_back" data-pos="1">' + esc(seoH1(r)) + '</a>（無雷，含評分與適合誰看）</li>',
+      others.map(function (x, i) { return '      <li><a href="' + spoilerFile(x) + '" data-id="' + esc(x.id) + '" data-kind="spoiler" data-list="spoiler_related" data-pos="' + (i + 1) + '">' + esc(spoilerH1(x)) + '</a></li>'; }).join('\n'),
+      '    </ul></section>',
+      listsOf(r).length ? '    <p class="meta in-lists">收錄在：' + listsOf(r).map(listLink).join('、') + '</p>' : '',
+      '  </main>',
+      FOOT
+    ].filter(function (x) { return x !== ''; }).join('\n');
   });
 
   /* 總表：全部的書一頁看完（書名、類型、評分、一句話），依評分排序 */
@@ -477,7 +563,8 @@ function buildSite(REVIEWS, opts) {
   var urls = [{ loc: BASE, lastmod: TODAY }, { loc: BASE + 'about.html', lastmod: TODAY }]
     .concat([{ loc: BASE + 'reviews.html', lastmod: TODAY }, { loc: BASE + 'lists.html', lastmod: TODAY }, { loc: BASE + 'feedback.html', lastmod: TODAY }])
     .concat(catPages.map(function (f) { return { loc: BASE + f, lastmod: TODAY }; }))
-    .concat(REVIEWS.map(function (r) { return { loc: BASE + r.id + '.html', lastmod: r.date }; }))
+    .concat(REVIEWS.map(function (r) { return { loc: BASE + r.id + '.html', lastmod: reviewMod(r) }; }))
+    .concat(REVIEWS.filter(function (r) { return SPOILERS[r.id]; }).map(function (r) { return { loc: BASE + spoilerFile(r), lastmod: spoilerDate(SPOILERS[r.id]) }; }))
     .concat([{ loc: BASE + 'books.html', lastmod: TODAY }])
     .concat(LISTS.map(function (l) { return { loc: BASE + l.id + '.html', lastmod: listDate(l) }; }))
     .concat(NEWS.length ? [{ loc: BASE + 'news.html', lastmod: TODAY }] : [])

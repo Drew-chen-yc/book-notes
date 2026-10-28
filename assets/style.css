@@ -110,8 +110,6 @@ article h3 { font-size: 19px; line-height: 1.5; margin: 1.5em 0 .2em; color: var
 
 .prose { padding: 32px 16px 48px; }
 .site-footer { margin-top: 40px; border-top: 1px solid var(--line); background: var(--surface); padding: 32px 0 20px; }
-#newsletter h2 { margin: 0; font-size: 20px; }
-#newsletter p { margin: 4px 0 12px; color: var(--muted); }
 .form-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .form-row input { flex: 2 1 220px; width: auto; }
 .form-row select { flex: 1 1 120px; width: auto; }
@@ -274,11 +272,7 @@ article h3 { color: var(--text); }
 .quick a { border: 0; border-radius: 999px; background: var(--chip); padding: 4px 14px; }
 .books th, .books td, .pick { border-color: var(--line); }
 
-/* 頁尾訂閱 */
 .site-footer { border-top: 0; background: transparent; padding: 0 0 28px; margin-top: 56px; }
-#newsletter { background: var(--panel); border-radius: 28px; padding: 32px; }
-#newsletter h2 { font-size: 24px; }
-#newsletter .btn { background: var(--sun); color: #1f3344; }
 #consent-banner { border: 0; border-radius: 20px; }
 
 @media (max-width: 860px) { .hero2 { grid-template-columns: 1fr; padding: 32px 24px; border-radius: 24px; } .hero2-art { max-width: 260px; order: -1; }
@@ -312,7 +306,7 @@ article h3 { color: var(--text); }
 @media (max-width: 560px) { .site-header .wrap { height: auto; flex-wrap: wrap; padding-top: 12px; padding-bottom: 4px; }
   .site-header nav { width: 100%; display: flex; gap: 4px; margin-top: 6px; } .site-header nav a { margin-left: 0; background: var(--chip); flex: 1; text-align: center; font-size: 15px; padding: 5px 4px; } }
 @media (prefers-reduced-motion: reduce) { .list-card { transition: none; } .list-card:hover { transform: none; } }
-@media (max-width: 560px) { #newsletter { padding: 22px; } .form-row input { flex: 1 1 100%; min-width: 0; } }
+@media (max-width: 560px) { .form-row input { flex: 1 1 100%; min-width: 0; } }
 
 /* ===== 分類頁、導覽下拉選單、頁尾網站地圖 ===== */
 .chip small, .dd-menu small { font-size: 12px; opacity: .7; margin-left: 2px; }
@@ -443,3 +437,12 @@ a.chip { text-decoration: none; display: inline-block; }
   .rows > a + a::before { left: 12px; right: 12px; }
   .rows > .row.same-day::before { left: 12px; }
 }
+
+/* 重雷心得（2026-10-29）：心得頁底部的入口、重雷頁開頭的劇透警告 */
+.spoiler-cta { margin: 8px 0 20px; padding: 20px 22px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--danger); border-radius: var(--radius); }
+.spoiler-cta h2 { font-size: 20px; margin: 0 0 6px; }
+.spoiler-cta p { margin: 4px 0; }
+.spoiler-link { font-size: 18px; font-weight: 700; }
+.spoiler-warn { margin: 14px 0 0; padding: 14px 18px; border: 1px solid var(--danger); border-radius: var(--radius); background: var(--surface); color: var(--text); }
+.spoiler-warn b { color: var(--danger); margin-right: 4px; }
+.tag.tag-spoiler { background: var(--danger); color: var(--surface); }

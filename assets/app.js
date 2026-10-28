@@ -111,7 +111,7 @@
         return;
       }
       var r = REVIEWS.find(function (x) { return x.id === a.dataset.id; });
-      track('select_content', Object.assign({ content_type: 'review', content_id: a.dataset.id,
+      track('select_content', Object.assign({ content_type: a.dataset.kind === 'spoiler' ? 'spoiler' : 'review', content_id: a.dataset.id,
         list_name: a.dataset.list, list_position: Number(a.dataset.pos) }, r ? { book_category: r.category } : {}));
     });
   }
@@ -248,11 +248,24 @@
     if (q) { input.value = q; input.dispatchEvent(new Event('input')); }
   }
 
+  /* ================= 重雷心得頁（<id>-spoiler.html，靜態，不重畫） =================
+   * 沿用心得頁的 view_review／review_scroll／read_complete，報表用 page_type = spoiler（content_group = 重雷心得）區分，不用改 GTM。 */
+  function initSpoiler() {
+    var id = document.documentElement.getAttribute('data-review-id');
+    var r = REVIEWS.find(function (x) { return x.id === id; });
+    if (!r) return;
+    track('view_review', reviewParams(r));
+    window.BN.trackReading($('#article'), { review_id: r.id, book_category: r.category }, { minSeconds: 60 });
+    bindCardClicks($('main'));
+  }
+
   /* ================= 心得頁 ================= */
   function initReview() {
     var id = currentReviewId();
     var r = REVIEWS.find(function (x) { return x.id === id; });
     var main = $('#review');
+    // 重雷心得的連結：build 只在有寫重雷心得的書加 data-spoiler，下面重畫內容時要放回去
+    var sp = main.dataset.spoiler ? { file: main.dataset.spoiler, title: main.dataset.spoilerTitle || '', progress: main.dataset.spoilerProgress || '' } : null;
     if (!r) {
       main.innerHTML = '<h1>找不到這篇心得</h1><p><a href="index.html">回首頁</a></p>';
       track('review_not_found', { review_id: id || '(empty)' });
@@ -276,6 +289,10 @@
       '<p class="lead">' + esc(r.summary) + '</p></div></header>' +
       '<article id="article">' + bodyHtml(r.body).join('') +
       '<p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p></article>' +
+      (sp ? '<section class="spoiler-cta" aria-labelledby="spoiler-h"><h2 id="spoiler-h">讀完了？看重雷心得</h2>' +
+        '<p>無雷心得只能講到這裡。結局、伏筆和我真正想聊的部分，寫在重雷心得：</p>' +
+        '<p><a class="spoiler-link" href="' + esc(sp.file) + '" data-id="' + esc(r.id) + '" data-kind="spoiler" data-list="review_spoiler_cta" data-pos="1">' + esc(sp.title) + '</a></p>' +
+        '<p class="meta">內含完整劇情與結局。' + (sp.progress ? '寫到' + esc(sp.progress) + '。' : '') + '</p></section>' : '') +
       '<section class="actions" aria-label="互動">' +
       '<button type="button" id="like" class="btn btn-ghost" aria-pressed="' + liked + '">' + likeLabel(liked) + '</button>' +
       '<span class="share-label">分享：</span>' +
@@ -325,6 +342,8 @@
       track('click_buy_book', Object.assign({}, base, { store: a.dataset.store, link_url: a.href }));
     });
 
+    if (sp) bindCardClicks(main.querySelector('.spoiler-cta'));
+
     /* 相關推薦 */
     var rel = relatedOf(r, REVIEWS, 4);
     var relBox = $('#related');
@@ -332,8 +351,8 @@
     bindCardClicks(relBox);
   }
 
-  /* ================= 電子報表單（每頁頁尾） =================
-   * 名單存進站長自己的 Google 表單（回應在 Google 表單／試算表），Email 絕不送進 GA。 */
+  /* ================= 電子報（2026-10-29 停辦） =================
+   * 訂閱表單已從全站拿掉；這張 Google 表單只留給關於頁「刪除先前的訂閱資料」使用。Email 絕不送進 GA。 */
   var NEWSLETTER = {
     url: 'https://docs.google.com/forms/d/e/1FAIpQLSeZIZwdwvDil4ZJNt87a8bcVeVZix9YbsOLa1wJ2yg1qv0HuQ/formResponse',
     email: 'entry.1091954786', interest: 'entry.733728389', action: 'entry.618872592', source: 'entry.833493817'
@@ -348,58 +367,6 @@
     return fetch(NEWSLETTER.url, { method: 'POST', mode: 'no-cors', body: body });
   }
   function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) && v.length <= 254; }
-
-  function initNewsletter() {
-    var f = $('#newsletter');
-    if (!f) return;
-    var started = false, sending = false;
-    var loc = page || 'other';
-    var msg = f.querySelector('.form-msg');
-    // 興趣分類選單跟著 CATEGORIES 走，新增分類不用改每一頁
-    if (f.interest && window.CATEGORIES) {
-      f.interest.innerHTML = '<option value="all">全部分類</option>' + window.CATEGORIES.map(function (c) {
-        return '<option value="' + esc(c) + '">' + esc(c) + '</option>';
-      }).join('');
-    }
-    // 蜜罐欄位：真人看不到，機器人會填 → 直接丟棄
-    var trap = document.createElement('input');
-    trap.type = 'text'; trap.name = 'website'; trap.tabIndex = -1; trap.autocomplete = 'off';
-    trap.setAttribute('aria-hidden', 'true'); trap.className = 'sr-only';
-    f.appendChild(trap);
-    var note = document.createElement('p');
-    note.className = 'form-note';
-    note.innerHTML = '按下訂閱即同意我們用這個 Email 寄送新心得通知，不作其他用途。可隨時<a href="about.html#unsubscribe">取消訂閱</a>，詳見<a href="about.html#privacy">隱私說明</a>。';
-    f.appendChild(note);
-
-    f.addEventListener('focusin', function () {
-      if (started) return;
-      started = true;
-      track('newsletter_start', { form_location: loc });
-    });
-    f.addEventListener('submit', function (e) {
-      e.preventDefault();
-      if (sending) return;
-      var email = f.email.value.trim();
-      if (!validEmail(email)) {
-        msg.textContent = 'Email 格式不正確';
-        track('newsletter_error', { form_location: loc, error_type: 'invalid_email' });
-        return;
-      }
-      if (trap.value) { f.innerHTML = '<p class="form-msg ok">訂閱成功！</p>'; return; }
-      var interest = f.interest.value;
-      var btn = f.querySelector('button[type=submit]');
-      sending = true; btn.disabled = true; msg.textContent = '送出中…';
-      sendToForm(email, interest, '訂閱').then(function () {
-        // 注意：只送「有人訂閱」這件事進 GA，不含 Email
-        track('generate_lead', { form_location: loc, lead_type: 'newsletter', interest_category: interest });
-        f.innerHTML = '<p class="form-msg ok">訂閱成功！有新心得時會寄信通知你。</p>';
-      }).catch(function () {
-        sending = false; btn.disabled = false;
-        msg.textContent = '送出失敗，請檢查網路後再試一次。';
-        track('newsletter_error', { form_location: loc, error_type: 'network' });
-      });
-    });
-  }
 
   /* ================= 回饋表單（feedback.html） =================
    * 內容送到站長的另一張 Google 表單，GA 只記「有人送出、哪一種」，不含任何留言內容。 */
@@ -470,7 +437,7 @@
       if (!validEmail(email)) { msg.textContent = 'Email 格式不正確'; return; }
       msg.textContent = '送出中…';
       sendToForm(email, '', '取消訂閱').then(function () {
-        f.innerHTML = '<p class="form-msg ok">已收到取消訂閱的申請，我們會在 7 天內從名單移除並刪除這個 Email。</p>';
+        f.innerHTML = '<p class="form-msg ok">已收到，我們會在 7 天內刪除這個 Email。</p>';
       }).catch(function () { msg.textContent = '送出失敗，請檢查網路後再試一次。'; });
     });
   }
@@ -518,6 +485,7 @@
   if (page === 'home') initHome();
   if (page === 'reviews') { initReviewsList(); applyCatParam(); }
   if (page === 'review') initReview();
+  if (page === 'spoiler') initSpoiler();
   if (page === 'news') initNewsList();
   if (page === 'list' || page === 'books' || page === 'category' || page === 'news' || page === 'news_article') bindCardClicks($('main'));
   if (page === 'home' && $('#home-news')) bindCardClicks($('#home-news'));
@@ -559,7 +527,6 @@
     }
   }
   initSiteNav();   // 書單與總表的連結也送 select_content
-  initNewsletter();
   initUnsubscribe();
   initFeedback();
 })();
