@@ -50,6 +50,34 @@
       link(x.s.ids[x.i - 1], 'prev', '上一本', 1) + link(x.s.ids[x.i + 1], 'next', '下一本', 2) + '</div></nav>';
   }
 
+  /* 心得頁右側欄（寬螢幕）與文中「接著看」小卡（窄螢幕）。build/seo-build.js 與 assets/app.js 各一份，要同步 */
+  function thumbImg(x, cls) {
+    return x.cover ? '<img class="' + cls + '" src="' + esc(x.cover) + '" alt="《' + esc(x.title) + '》書封" width="60" height="86" loading="lazy" decoding="async">'
+      : '<span class="' + cls + ' th-blank" style="--c:' + x.color + '" aria-hidden="true"></span>';
+  }
+  function starLine(x) { return '<em><span class="stars" aria-hidden="true">' + stars(x.rating) + '</span> ' + x.rating + '</em>'; }
+  function sideHtml(r, rel) {
+    var hs = r.body.filter(function (p) { return /^##\s/.test(p); }).map(function (p) { return p.replace(/^##\s+/, ''); });
+    var toc = tocHtml(r.body) ? '<section class="side-box side-toc"><h2>本篇目錄</h2><ol>' +
+      hs.map(function (h, i) { return '<li><a href="#s-' + (i + 1) + '">' + esc(h) + '</a></li>'; }).join('') + '</ol></section>' : '';
+    var more = r.subcategory ? catHref(r.category, r.subcategory) : catHref(r.category);
+    return '<aside class="review-side" aria-label="本篇目錄與推薦"><div class="side-sticky">' + toc +
+      '<section class="side-box"><h2>看完這本，接著看</h2>' + rel.map(function (x, i) {
+        return '<a class="side-card" href="' + esc(x.id) + '.html" data-id="' + esc(x.id) + '" data-list="review_side" data-pos="' + (i + 1) + '">' + thumbImg(x, 'th') +
+          '<span><b>《' + esc(x.title) + '》</b><small>' + esc(x.author) + (x.subcategory ? ' · ' + esc(x.subcategory) : '') + '</small>' + starLine(x) + '</span></a>';
+      }).join('') + '<a class="side-more" href="' + more + '">更多' + esc(r.subcategory || r.category) + '心得 →</a></section></div></aside>';
+  }
+  function inlineRel(r, rel) {
+    return '<aside class="inline-related" aria-label="接著看"><p class="ir-head">喜歡' + esc(r.subcategory || r.category) + '？這幾本也可以接著看</p><div class="ir-row">' +
+      rel.slice(0, 3).map(function (x, i) {
+        return '<a href="' + esc(x.id) + '.html" data-id="' + esc(x.id) + '" data-list="review_inline" data-pos="' + (i + 1) + '">' + thumbImg(x, 'ir-th') + '<b>《' + esc(x.title) + '》</b>' + starLine(x) + '</a>';
+      }).join('') + '</div></aside>';
+  }
+  /* 文中小卡插在第三個 ## 小標題前面；不到三個小標題就不插（文末還有「同類型心得」） */
+  function withInline(html, r, rel) {
+    var k = html.indexOf('<h2 id="s-3">');
+    return k < 0 || !rel.length ? html : html.slice(0, k) + inlineRel(r, rel) + html.slice(k);
+  }
   /* 評分可以是 4.5 這種半顆星 */
   /* SEO 用字：標題、H1、開頭第一句都對準「書名＋心得／評價／好看嗎」這類搜尋字詞 */
   function seoAsk(r) { return r.category === '小說' ? '好看嗎' : '值得讀嗎'; }
@@ -373,6 +401,7 @@
 
     var base = reviewParams(r);
     var liked = safeGet('bn_like_' + r.id) === '1';
+    var rel = relatedOf(r, REVIEWS, 4);
 
     main.innerHTML =
       '<nav class="crumb"><a href="index.html">首頁</a> / <a href="reviews.html">心得</a> / <a href="' + catHref(r.category) + '">' + esc(r.category) + '</a>' +
@@ -383,8 +412,8 @@
       '<p class="meta">' + r.date + ' · 約 ' + readMinutes(r) + ' 分鐘閱讀' + (seriesTag(r) ? ' · ' + esc(seriesTag(r)) : '') + '</p>' +
       '<p class="intro">' + esc(seoIntro(r)) + '</p>' +
       '<p class="lead">' + esc(r.summary) + '</p></div></header>' +
-      tocHtml(r.body) +
-      '<article id="article">' + bodyHtml(r.body).join('') +
+      '<div class="review-main">' + tocHtml(r.body) +
+      '<article id="article">' + withInline(bodyHtml(r.body).join(''), r, rel) +
       '<p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p></article>' +
       seriesNav(r, function (id) { return REVIEWS.find(function (x) { return x.id === id; }); }) +
       (sp ? '<section class="spoiler-cta" aria-labelledby="spoiler-h"><h2 id="spoiler-h">讀完了？看重雷心得</h2>' +
@@ -401,7 +430,7 @@
       window.STORES.map(function (s) {
         return '<a class="btn" target="_blank" rel="noopener" data-store="' + s.key + '" href="' + s.url(r) + '">到' + s.name + '看看 ↗</a>';
       }).join('') + '</div></section>' +
-      '<section class="related"><h2>同類型心得</h2><div id="related" class="rows"></div></section>' + inLists(r);
+      '<section class="related"><h2>同類型心得</h2><div id="related" class="rows"></div></section>' + inLists(r) + '</div>' + sideHtml(r, rel);
 
     track('view_review', base);
     window.BN.bumpProfile('view', r.category);
@@ -444,8 +473,11 @@
     if (main.querySelector('.series-nav')) bindCardClicks(main.querySelector('.series-nav'));
     readProgress($('#article'));
 
+    /* 右側欄與文中小卡的點擊也送 select_content（list_name = review_side／review_inline） */
+    if (main.querySelector('.review-side')) bindCardClicks(main.querySelector('.review-side'));
+    if (main.querySelector('.inline-related')) bindCardClicks(main.querySelector('.inline-related'));
+
     /* 相關推薦 */
-    var rel = relatedOf(r, REVIEWS, 4);
     var relBox = $('#related');
     relBox.innerHTML = rel.map(function (x, i) { return row(x, 'review_related', i + 1, false); }).join('');
     bindCardClicks(relBox);

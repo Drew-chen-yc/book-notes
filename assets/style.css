@@ -262,6 +262,10 @@ input[type=search], input[type=email], select { border-radius: 999px; padding: 1
 .seal-lg i { font-size: 18px; margin: 0; }
 .seal-xs { width: auto; height: auto; padding: 1px 10px; font-size: 14px; }
 .seal-xs i { display: inline; font-size: 12px; }
+/* 評分標籤一律同寬：4 和 4.5 的框一樣大（數字用等寬數字、置中） */
+.seal { justify-content: center; box-sizing: border-box; min-width: 4.3em; font-variant-numeric: tabular-nums; }
+.seal-lg { min-width: 4.3em; }
+.seal-xs { min-width: 4.2em; }
 .stars { color: var(--sun); }
 
 /* 心得頁 */
@@ -443,8 +447,25 @@ a.chip { text-decoration: none; display: inline-block; }
 .spoiler-cta h2 { font-size: 20px; margin: 0 0 6px; }
 .spoiler-cta p { margin: 4px 0; }
 .spoiler-link { font-size: 18px; font-weight: 700; }
-.spoiler-warn { margin: 14px 0 0; padding: 14px 18px; border: 1px solid var(--danger); border-radius: var(--radius); background: var(--surface); color: var(--text); }
-.spoiler-warn b { color: var(--danger); margin-right: 4px; }
+/* 重雷警告：淡紅底＋左側粗線＋驚嘆號圖示，回無雷心得做成按鈕 */
+.spoiler-warn { display: flex; gap: 16px; align-items: flex-start; margin: 16px 0 8px; padding: 20px 22px;
+  border: 1px solid var(--danger); border-left-width: 6px; border-radius: 16px; color: var(--text);
+  background: var(--surface); background: color-mix(in srgb, var(--danger) 7%, var(--surface)); }
+.spoiler-warn .sw-icon { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--danger); color: var(--surface); font-weight: 700; font-size: 24px; line-height: 1; }
+.spoiler-warn .sw-body { min-width: 0; }
+.spoiler-warn .sw-title { margin: 0 0 4px; font-size: 19px; font-weight: 700; color: var(--danger); letter-spacing: .06em; }
+.spoiler-warn .sw-text { margin: 0 0 14px; font-size: 16px; line-height: 1.75; }
+.spoiler-warn .sw-btn { display: inline-flex; align-items: center; gap: 2px; padding: 10px 22px; border-radius: 999px;
+  background: var(--danger); color: var(--surface); font-weight: 700; font-size: 16px; text-decoration: none;
+  box-shadow: 0 2px 6px rgba(179,38,30,.25); transition: transform .15s, box-shadow .15s; }
+.spoiler-warn .sw-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(179,38,30,.32); }
+.spoiler-warn .sw-btn:focus-visible { outline: 2px solid var(--danger); outline-offset: 3px; }
+@media (max-width: 560px) {
+  .spoiler-warn { padding: 16px; gap: 12px; }
+  .spoiler-warn .sw-icon { width: 32px; height: 32px; font-size: 20px; }
+  .spoiler-warn .sw-btn { display: flex; justify-content: center; }
+}
 .tag.tag-spoiler { background: var(--danger); color: var(--surface); }
 
 /* 搜尋（2026-10-29）：心得列表的「分類＋關鍵字」同一排、導覽列的搜尋按鈕與展開框 */
@@ -507,3 +528,52 @@ article h2[id] { scroll-margin-top: 16px; }
 .series-links .none { opacity: .55; font-weight: 400; }
 .series-links a:hover { outline: 2px solid var(--accent); }
 @media (max-width: 560px) { .series-links { grid-template-columns: 1fr; } .series-links .next { text-align: left; } }
+
+/* ===== 2026-10-29 心得頁右側欄：寬螢幕兩欄（目錄＋接著看），窄螢幕改成文中小卡 ===== */
+.review-layout { max-width: 1120px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; column-gap: 40px; }
+.review-layout > .crumb, .review-layout > .review-head, .review-layout > h1, .review-layout > p { grid-column: 1 / -1; }
+.review-main { min-width: 0; max-width: 760px; }
+.review-side { padding-top: 16px; }
+.side-sticky { position: sticky; top: 16px; display: grid; gap: 16px; }
+.side-box { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; }
+.side-box h2 { font-size: 16px; margin: 0 0 10px; }
+.side-toc ol { margin: 0; padding-left: 1.4em; font-size: 15px; max-height: 40vh; overflow-y: auto; }
+.side-toc li { margin: .25em 0; }
+.side-toc a { color: var(--text); text-decoration: none; }
+.side-toc a:hover { color: var(--accent); text-decoration: underline; }
+.side-card { display: flex; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); text-decoration: none; color: var(--text); }
+.side-box h2 + .side-card { border-top: 0; }
+.side-card:hover b { color: var(--accent); }
+.side-card .th { width: 52px; height: 74px; object-fit: cover; border-radius: 3px 6px 6px 3px; box-shadow: 0 3px 8px rgba(31,51,68,.18); flex: none; }
+.th-blank { display: block; background: var(--c, var(--chip)); }
+.side-card b { display: block; font-size: 15px; line-height: 1.4; }
+.side-card small { display: block; color: var(--muted); font-size: 13px; }
+.side-card em, .inline-related em, .cat-pick em.cp-stars { font-style: normal; color: var(--star); font-size: 13px; display: block; white-space: nowrap; }
+.side-card em .stars, .inline-related em .stars, .cat-pick .stars { letter-spacing: 0; }
+.side-more { display: block; margin-top: 8px; font-size: 14px; }
+.inline-related { display: none; }
+.review-main > .toc { display: none; }
+@media (max-width: 1023px) {
+  .review-layout { display: block; max-width: 760px; }
+  .review-side { display: none; }
+  .review-main > .toc { display: block; }
+  .inline-related { display: block; margin: 24px 0; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
+  .ir-head { margin: 0 0 10px !important; font-weight: 700; }
+  .ir-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .ir-row a { text-decoration: none; color: var(--text); font-size: 14px; line-height: 1.4; }
+  .ir-row b { display: block; font-weight: 700; }
+  .ir-th { width: 100%; height: auto; aspect-ratio: 3 / 4.2; object-fit: cover; border-radius: 4px 8px 8px 4px; display: block; margin-bottom: 6px; }
+}
+
+/* ===== 2026-10-29 分類頁導言＋入門三本 ===== */
+.cat-intro p { max-width: 42em; }
+.cat-intro h2 { font-size: 20px; margin: 24px 0 10px; }
+.cat-picks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 8px 0; }
+.cat-pick { display: flex; gap: 12px; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; text-decoration: none; color: var(--text); }
+.cat-pick:hover b { color: var(--accent); }
+.cp-th { width: 64px; height: 92px; object-fit: cover; border-radius: 3px 6px 6px 3px; flex: none; box-shadow: 0 3px 8px rgba(31,51,68,.18); }
+.cat-pick b { display: block; }
+.cat-pick small { display: block; color: var(--muted); font-size: 13px; margin: 2px 0 2px; }
+.cat-pick em.cp-why { font-style: normal; font-size: 14px; line-height: 1.6; display: block; margin-top: 4px; }
+.cat-more { margin: 4px 0 0; }
+@media (max-width: 760px) { .cat-picks { grid-template-columns: 1fr; } }

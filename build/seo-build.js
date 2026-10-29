@@ -122,6 +122,34 @@ function buildSite(REVIEWS, opts) {
       link(x.s.ids[x.i - 1], 'prev', '上一本', 1) + link(x.s.ids[x.i + 1], 'next', '下一本', 2) + '</div></nav>';
   }
 
+  /* 心得頁右側欄（寬螢幕）與文中「接著看」小卡（窄螢幕）。build/seo-build.js 與 assets/app.js 各一份，要同步 */
+  function thumbImg(x, cls) {
+    return x.cover ? '<img class="' + cls + '" src="' + esc(x.cover) + '" alt="《' + esc(x.title) + '》書封" width="60" height="86" loading="lazy" decoding="async">'
+      : '<span class="' + cls + ' th-blank" style="--c:' + x.color + '" aria-hidden="true"></span>';
+  }
+  function starLine(x) { return '<em><span class="stars" aria-hidden="true">' + stars(x.rating) + '</span> ' + x.rating + '</em>'; }
+  function sideHtml(r, rel) {
+    var hs = r.body.filter(function (p) { return /^##\s/.test(p); }).map(function (p) { return p.replace(/^##\s+/, ''); });
+    var toc = tocHtml(r.body) ? '<section class="side-box side-toc"><h2>本篇目錄</h2><ol>' +
+      hs.map(function (h, i) { return '<li><a href="#s-' + (i + 1) + '">' + esc(h) + '</a></li>'; }).join('') + '</ol></section>' : '';
+    var more = r.subcategory ? catHref(r.category, r.subcategory) : catHref(r.category);
+    return '<aside class="review-side" aria-label="本篇目錄與推薦"><div class="side-sticky">' + toc +
+      '<section class="side-box"><h2>看完這本，接著看</h2>' + rel.map(function (x, i) {
+        return '<a class="side-card" href="' + esc(x.id) + '.html" data-id="' + esc(x.id) + '" data-list="review_side" data-pos="' + (i + 1) + '">' + thumbImg(x, 'th') +
+          '<span><b>《' + esc(x.title) + '》</b><small>' + esc(x.author) + (x.subcategory ? ' · ' + esc(x.subcategory) : '') + '</small>' + starLine(x) + '</span></a>';
+      }).join('') + '<a class="side-more" href="' + more + '">更多' + esc(r.subcategory || r.category) + '心得 →</a></section></div></aside>';
+  }
+  function inlineRel(r, rel) {
+    return '<aside class="inline-related" aria-label="接著看"><p class="ir-head">喜歡' + esc(r.subcategory || r.category) + '？這幾本也可以接著看</p><div class="ir-row">' +
+      rel.slice(0, 3).map(function (x, i) {
+        return '<a href="' + esc(x.id) + '.html" data-id="' + esc(x.id) + '" data-list="review_inline" data-pos="' + (i + 1) + '">' + thumbImg(x, 'ir-th') + '<b>《' + esc(x.title) + '》</b>' + starLine(x) + '</a>';
+      }).join('') + '</div></aside>';
+  }
+  /* 文中小卡插在第三個 ## 小標題前面；不到三個小標題就不插（文末還有「同類型心得」） */
+  function withInline(html, r, rel) {
+    var k = html.indexOf('<h2 id="s-3">');
+    return k < 0 || !rel.length ? html : html.slice(0, k) + inlineRel(r, rel) + html.slice(k);
+  }
   /* 分類頁網址：cat-<分類>.html、cat-<分類>-<子分類>.html（build/seo-build.js 與 assets/app.js 各有一份，要同步） */
   var LISTS = (opts && opts.lists) || [];
   /* 書單類型（window.LISTS 每篇的 type 欄位）：書單總覽依這個順序分組；沒填的歸「其他書單」 */
@@ -134,7 +162,7 @@ function buildSite(REVIEWS, opts) {
   /* 導覽列下拉選單與頁尾網站地圖：直接寫進每一頁的 HTML，搜尋引擎不必執行程式就讀得到所有分類頁與書單的連結。
    * 內容與順序要和 assets/app.js 的 initSiteNav() 一致（那邊只在頁面沒有這兩塊時才動態補上）。
    * 分類順序依 data/reviews.js 的 CATEGORIES、SUBCATEGORIES（opts.categories、opts.subcategories），只列有心得的。 */
-  var APP_VER = '20261029b';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
+  var APP_VER = '20261029c';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
   function countOf(cat, sub) { return REVIEWS.filter(function (r) { return r.category === cat && (!sub || r.subcategory === sub); }).length; }
   function uniq(list) { return list.filter(function (x, i) { return x && list.indexOf(x) === i; }); }
   var LIVE_CATS = ((opts && opts.categories) || uniq(REVIEWS.map(function (r) { return r.category; })))
@@ -265,7 +293,7 @@ function buildSite(REVIEWS, opts) {
       '  <meta property="og:image" content="' + BASE + 'assets/og.png">',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261029b">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261029c">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -323,14 +351,14 @@ function buildSite(REVIEWS, opts) {
       ogImage(r),
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261029b">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261029c">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
       '    <a class="logo" href="index.html">折角<span>Dogeared</span><small>｜讀書心得與推薦</small></a>',
       '    ' + NAV,
       '  </div></header>',
-      '  <main class="wrap narrow" id="review"' + (SPOILERS[r.id] ? ' data-spoiler="' + spoilerFile(r) + '" data-spoiler-title="' + esc(spoilerH1(r)) + '" data-spoiler-progress="' + esc(SPOILERS[r.id].progress || '') + '"' : '') + '>',
+      '  <main class="wrap review-layout" id="review"' + (SPOILERS[r.id] ? ' data-spoiler="' + spoilerFile(r) + '" data-spoiler-title="' + esc(spoilerH1(r)) + '" data-spoiler-progress="' + esc(SPOILERS[r.id].progress || '') + '"' : '') + '>',
       '    ' + crumbOf(r),
       '    <header class="review-head">',
       '      ' + cover(r, 'lg'),
@@ -340,9 +368,10 @@ function buildSite(REVIEWS, opts) {
       '      <p class="intro">' + esc(intro) + '</p>',
       '      <p class="lead">' + esc(r.summary) + '</p></div>',
       '    </header>',
+      '    <div class="review-main">',
       tocHtml(r.body) ? '    ' + tocHtml(r.body) : '',
       '    <article id="article">',
-      bodyHtml(r.body).map(function (x) { return '      ' + x; }).join('\n'),
+      withInline(bodyHtml(r.body).map(function (x) { return '      ' + x; }).join('\n'), r, rel),
       '      <p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p>',
       '    </article>',
       seriesNav(r, byId) ? '    ' + seriesNav(r, byId) : '',
@@ -351,6 +380,8 @@ function buildSite(REVIEWS, opts) {
       rel.map(function (x) { return '      <li><a href="' + esc(x.id) + '.html">' + esc(seoH1(x)) + '</a>（' + esc(x.author) + '）</li>'; }).join('\n'),
       '    </ul></section>',
       listsOf(r).length ? '    <p class="meta in-lists">收錄在：' + listsOf(r).map(listLink).join('、') + '</p>' : '',
+      '    </div>',
+      '    ' + sideHtml(r, rel),
       '  </main>',
       FOOT
     ].join('\n');
@@ -395,7 +426,7 @@ function buildSite(REVIEWS, opts) {
       ogImage(r),
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261029b">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261029c">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -404,7 +435,11 @@ function buildSite(REVIEWS, opts) {
       '  </div></header>',
       '  <main class="wrap narrow" id="spoiler">',
       '    ' + crumbOf(r).replace('</nav>', ' / <a href="' + esc(r.id) + '.html">《' + esc(r.title) + '》心得</a> / 結局解析</nav>'),
-      '    <aside class="spoiler-warn" role="note"><b>這篇有完整劇透。</b>會直接講到結局、反轉和角色下場' + (sp.progress ? '，寫到' + esc(sp.progress) : '') + '。還沒讀的話，先看 <a href="' + esc(r.id) + '.html">無雷心得</a>。</aside>',
+      '    <aside class="spoiler-warn" role="note"><span class="sw-icon" aria-hidden="true">!</span><div class="sw-body">',
+      '      <p class="sw-title">重雷警告</p>',
+      '      <p class="sw-text">本篇心得為重雷心得，會透露劇情和結局走向，若想閱讀推薦心得，請點擊下方連結！</p>',
+      '      <a class="sw-btn" href="' + esc(r.id) + '.html" data-id="' + esc(r.id) + '" data-list="spoiler_warn" data-pos="1">閱讀無雷推薦心得<span aria-hidden="true"> →</span></a>',
+      '    </div></aside>',
       '    <header class="review-head">',
       '      ' + cover(r, 'lg'),
       '      <div><span class="tag tag-spoiler">重雷心得</span><h1>' + esc(h1) + '</h1>',
@@ -498,6 +533,29 @@ function buildSite(REVIEWS, opts) {
     var c = seen[r.category];
     if (r.subcategory && !c.subSeen[r.subcategory]) { c.subSeen[r.subcategory] = 1; c.subs.push(r.subcategory); }
   });
+  /* 分類頁導言（window.CAT_INTROS，2026-10-29）：兩段導言＋「先讀這三本」書封卡片＋「全部 X 心得」小標 */
+  var CAT_INTROS = (opts && opts.catIntros) || {};
+  Object.keys(CAT_INTROS).forEach(function (k) {
+    var c = k.split('|'), it = CAT_INTROS[k];
+    (it.picks || []).forEach(function (p) {
+      var b = byId(p[0]);
+      if (!b || b.category !== c[0] || (c[1] && b.subcategory !== c[1])) throw new Error('分類導言「' + k + '」：推薦的 ' + p[0] + ' 不存在或不屬於這個分類。');
+    });
+    if (it.list && !LISTS.some(function (l) { return l.id === it.list; })) throw new Error('分類導言「' + k + '」：書單 ' + it.list + ' 不存在。');
+  });
+  function catIntro(cat, sub, slug) {
+    var it = CAT_INTROS[sub ? cat + '|' + sub : cat];
+    if (!it) return '';
+    var l = it.list && LISTS.filter(function (x) { return x.id === it.list; })[0];
+    return '    <section class="cat-intro">\n' + it.paras.map(function (p) { return '      <p>' + esc(p) + '</p>'; }).join('\n') +
+      (l ? '\n      <p class="cat-more"><a href="' + esc(l.id) + '.html">' + esc(l.title) + ' →</a></p>' : '') +
+      (it.picks && it.picks.length ? '\n      <h2>' + esc(it.picksTitle || '先讀這三本') + '</h2>\n      <div class="cat-picks">' + it.picks.map(function (p, i) {
+        var b = byId(p[0]);
+        return '<a class="cat-pick" href="' + esc(b.id) + '.html" data-id="' + esc(b.id) + '" data-list="category_' + slug + '_picks" data-pos="' + (i + 1) + '">' + thumbImg(b, 'cp-th') +
+          '<span><b>《' + esc(b.title) + '》</b><small>' + esc(b.author) + '</small><em class="cp-stars"><span class="stars" aria-hidden="true">' + stars(b.rating) + '</span> ' + b.rating + '</em><em class="cp-why">' + esc(p[1]) + '</em></span></a>';
+      }).join('') + '</div>' : '') +
+      '\n      <h2>全部' + esc(catName(cat, sub)) + '心得</h2>\n    </section>';
+  }
   function buildCat(cat, sub, subs) {
     var rows = REVIEWS.filter(function (r) { return r.category === cat && (!sub || r.subcategory === sub); });
     var file = catHref(cat, sub), name = catName(cat, sub), slug = file.replace(/^cat-|\.html$/g, '');
@@ -519,6 +577,7 @@ function buildSite(REVIEWS, opts) {
         sub ? '    <p class="chips cat-links"><a class="chip" href="' + catHref(cat) + '">全部' + esc(cat) + '</a>' + seen[cat].subs.map(function (s) {
           return '<a class="chip' + (s === sub ? ' active' : '') + '" href="' + catHref(cat, s) + '">' + esc(s) + '</a>';
         }).join('') + '</p>' : '',
+        catIntro(cat, sub, slug),
         '    <div class="rows">',
         rowList(rows, 'category_' + slug).map(function (x) { return '      ' + x; }).join('\n'),
         '    </div>'
