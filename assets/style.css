@@ -480,3 +480,30 @@ a.chip { text-decoration: none; display: inline-block; }
 .cover.cover-img { padding: 0; background: var(--chip); box-shadow: 0 6px 18px rgba(31,51,68,.18); }
 .cover.cover-img::before, .cover.cover-img::after { display: none; }
 .cover.cover-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* 目錄、閱讀進度條、系列導覽（2026-10-29） */
+.toc { margin: 16px 0 0; }
+.toc details { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 12px 18px; }
+.toc summary { cursor: pointer; font-weight: 700; list-style: none; }
+.toc summary::-webkit-details-marker { display: none; }
+.toc summary::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 10px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-3px) rotate(-45deg); transition: transform .15s; }
+.toc details[open] summary::before { transform: translateY(-3px) rotate(45deg); }
+.toc summary small { margin-left: 10px; font-weight: 400; color: var(--muted); font-size: 13px; }
+.toc ol { margin: 10px 0 2px; padding-left: 1.6em; }
+.toc li { margin: .3em 0; }
+.toc a { color: var(--text); text-decoration: none; }
+.toc a:hover { color: var(--accent); text-decoration: underline; }
+article h2[id] { scroll-margin-top: 16px; }
+.read-progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 80; pointer-events: none; }
+.read-progress span { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 0 2px 2px 0; }
+.series-nav { margin: 8px 0 20px; padding: 16px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
+.series-head { margin: 0 0 10px; font-size: 15px; color: var(--muted); }
+.series-head b { color: var(--text); margin-right: 8px; font-size: 17px; }
+.series-head a { margin-left: 12px; }
+.series-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.series-links > * { display: block; padding: 10px 14px; border-radius: 14px; background: var(--chip); text-decoration: none; color: var(--text); font-weight: 700; line-height: 1.5; }
+.series-links small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; }
+.series-links .next { text-align: right; }
+.series-links .none { opacity: .55; font-weight: 400; }
+.series-links a:hover { outline: 2px solid var(--accent); }
+@media (max-width: 560px) { .series-links { grid-template-columns: 1fr; } .series-links .next { text-align: left; } }

@@ -12,18 +12,44 @@
     });
   }
   /* 內文段落：「## 」開頭是小標題、「### 」是次標題、連續的「- 」是條列，其餘是一般段落 */
-  function bodyHtml(body) {
-    var out = [], li = [];
+  function bodyHtml(body) {   // ## 小標題帶 id="s-N"，給目錄跳轉
+    var out = [], li = [], h2 = 0;
     function flush() { if (li.length) { out.push('<ul>' + li.join('') + '</ul>'); li = []; } }
     body.forEach(function (p) {
       if (p.indexOf('- ') === 0) { li.push('<li>' + esc(p.slice(2)) + '</li>'); return; }
       flush();
       var m = /^(#{2,3})\s+(.+)$/.exec(p);
-      out.push(m ? '<h' + m[1].length + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '<p>' + esc(p) + '</p>');
+      out.push(m ? '<h' + m[1].length + (m[1].length === 2 ? ' id="s-' + (++h2) + '"' : '') + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '<p>' + esc(p) + '</p>');
     });
     flush();
     return out;
   }
+  function SERIES_DATA() { return window.SERIES || []; }
+  /* 長篇心得的目錄（## 小標題 4 個以上才出現）與系列導覽（window.SERIES）。build/seo-build.js 與 assets/app.js 各一份，要同步 */
+  function tocHtml(body) {
+    var hs = body.filter(function (p) { return /^##\s/.test(p); }).map(function (p) { return p.replace(/^##\s+/, ''); });
+    if (hs.length < 4) return '';
+    return '<nav class="toc" aria-label="本篇目錄"><details><summary>目錄<small>' + hs.length + ' 節，點標題直接跳過去</small></summary><ol>' +
+      hs.map(function (h, i) { return '<li><a href="#s-' + (i + 1) + '">' + esc(h) + '</a></li>'; }).join('') + '</ol></details></nav>';
+  }
+  function seriesOf(r) {
+    var list = SERIES_DATA();
+    for (var i = 0; i < list.length; i++) { var k = list[i].ids.indexOf(r.id); if (k > -1) return { s: list[i], i: k }; }
+    return null;
+  }
+  function seriesTag(r) { var x = seriesOf(r); return x ? x.s.name + '第 ' + (x.i + 1) + ' 本（共 ' + x.s.ids.length + ' 本）' : ''; }
+  function seriesNav(r, findById) {
+    var x = seriesOf(r);
+    if (!x) return '';
+    function link(id, cls, label, pos) {
+      var b = id && findById(id);
+      return b ? '<a class="' + cls + '" href="' + esc(b.id) + '.html" data-id="' + esc(b.id) + '" data-list="series_nav" data-pos="' + pos + '"><small>' + label + '</small>《' + esc(b.title) + '》</a>' : '<span class="' + cls + ' none"><small>' + label + '</small>' + (cls === 'prev' ? '這是第一本' : '這是最後一本') + '</span>';
+    }
+    return '<nav class="series-nav" aria-label="系列導覽"><p class="series-head"><b>' + esc(x.s.name) + '</b>第 ' + (x.i + 1) + ' 本，共 ' + x.s.ids.length + ' 本' +
+      (x.s.list ? '<a href="' + esc(x.s.list) + '.html">看閱讀順序</a>' : '') + '</p><div class="series-links">' +
+      link(x.s.ids[x.i - 1], 'prev', '上一本', 1) + link(x.s.ids[x.i + 1], 'next', '下一本', 2) + '</div></nav>';
+  }
+
   /* 評分可以是 4.5 這種半顆星 */
   /* SEO 用字：標題、H1、開頭第一句都對準「書名＋心得／評價／好看嗎」這類搜尋字詞 */
   function seoAsk(r) { return r.category === '小說' ? '好看嗎' : '值得讀嗎'; }
@@ -306,6 +332,27 @@
     track('view_review', reviewParams(r));
     window.BN.trackReading($('#article'), { review_id: r.id, book_category: r.category }, { minSeconds: 60 });
     bindCardClicks($('main'));
+    readProgress($('#article'));
+  }
+
+  /* 閱讀進度條：頁面最上面一條細線，跟著文章捲動的比例變長 */
+  function readProgress(article) {
+    if (!article) return;
+    var bar = document.querySelector('.read-progress span');
+    if (!bar) {
+      var wrap = document.createElement('div'); wrap.className = 'read-progress'; wrap.setAttribute('aria-hidden', 'true');
+      wrap.appendChild(bar = document.createElement('span')); document.body.appendChild(wrap);
+    }
+    var ticking = false;
+    function update() {
+      ticking = false;
+      var r = article.getBoundingClientRect(), total = r.height - window.innerHeight * 0.6;
+      var pct = total <= 0 ? 100 : Math.min(100, Math.max(0, (-r.top + window.innerHeight * 0.2) / total * 100));
+      bar.style.width = pct.toFixed(1) + '%';
+    }
+    window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    window.addEventListener('resize', update);
+    update();
   }
 
   /* ================= 心得頁 ================= */
@@ -333,11 +380,13 @@
       '<header class="review-head">' + cover(r, 'lg') +
       '<div><span class="tag">' + esc(catLabel(r)) + '</span><h1>' + esc(seoH1(r)) + '</h1>' +
       '<p class="meta">' + esc(r.author) + '</p><p class="rating">' + seal(r.rating, 'lg') + '<span class="stars big" aria-hidden="true">' + stars(r.rating) + '</span></p>' +
-      '<p class="meta">' + r.date + ' · 約 ' + readMinutes(r) + ' 分鐘閱讀</p>' +
+      '<p class="meta">' + r.date + ' · 約 ' + readMinutes(r) + ' 分鐘閱讀' + (seriesTag(r) ? ' · ' + esc(seriesTag(r)) : '') + '</p>' +
       '<p class="intro">' + esc(seoIntro(r)) + '</p>' +
       '<p class="lead">' + esc(r.summary) + '</p></div></header>' +
+      tocHtml(r.body) +
       '<article id="article">' + bodyHtml(r.body).join('') +
       '<p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p></article>' +
+      seriesNav(r, function (id) { return REVIEWS.find(function (x) { return x.id === id; }); }) +
       (sp ? '<section class="spoiler-cta" aria-labelledby="spoiler-h"><h2 id="spoiler-h">讀完了？看重雷心得</h2>' +
         '<p>無雷心得只能講到這裡。結局、伏筆和我真正想聊的部分，寫在重雷心得：</p>' +
         '<p><a class="spoiler-link" href="' + esc(sp.file) + '" data-id="' + esc(r.id) + '" data-kind="spoiler" data-list="review_spoiler_cta" data-pos="1">' + esc(sp.title) + '</a></p>' +
@@ -392,6 +441,8 @@
     });
 
     if (sp) bindCardClicks(main.querySelector('.spoiler-cta'));
+    if (main.querySelector('.series-nav')) bindCardClicks(main.querySelector('.series-nav'));
+    readProgress($('#article'));
 
     /* 相關推薦 */
     var rel = relatedOf(r, REVIEWS, 4);

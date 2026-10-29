@@ -903,6 +903,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-19",
     "color": "#2f5d8a",
+    "cover": "assets/covers/nov2675.webp",
+    "coverSize": [
+      300,
+      404
+    ],
     "tags": [
       "轉世",
       "神座祭司",
@@ -7487,3 +7492,9 @@ window.LISTS = [
 /* 書訊（新聞／得獎／排行榜）。欄位：id（nws 加數字）、date、type（新聞／得獎／排行榜）、scope（網路小說／台灣書市／國際文學獎／日本輕小說／文學，可省略）、
  * title、source、url、summary、body（段落陣列，可省略）、related（相關心得 id 陣列，可省略）。空陣列時網站不顯示書訊。 */
 window.NEWS = [];
+
+/* 系列書（2026-10-29）：心得頁顯示「第幾本、上一本／下一本」。ids 依閱讀順序排，list 是對應的閱讀順序書單 id */
+window.SERIES = [
+  { name: '殺手系列', list: 'killer-series-order', ids: ['nov2658', 'nov2659', 'nov2660', 'nov2661', 'nov2662', 'nov2663', 'nov2664', 'nov2665', 'nov2666', 'nov2667'] },
+  { name: '在咖啡冷掉之前系列', list: 'coffee-series-order', ids: ['nov2648', 'nov2649', 'nov2650', 'nov2651', 'nov2652', 'nov2653'] }
+];

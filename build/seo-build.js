@@ -68,6 +68,14 @@ function buildSite(REVIEWS, opts) {
   function spoilerTitle(r, sp) { return '《' + r.title + '》結局解析：' + sp.hook + '（重雷心得）｜折角 Dogeared'; }
   function spoilerDate(sp) { return sp.updated || sp.date; }
   function reviewMod(r) { var sp = SPOILERS[r.id]; return [r.updated || r.date].concat(sp ? [spoilerDate(sp)] : []).sort().pop(); }
+  /* 分享縮圖：有書封就用書封（assets/covers/og/<id>.jpg，從書封 WebP 轉成 JPEG，社群平台都吃），沒有就用全站共用圖 */
+  function ogImage(r) {
+    if (!r.cover) return '  <meta property="og:image" content="' + BASE + 'assets/og.png">';
+    var dim = r.coverSize || [300, 430];
+    return ['  <meta property="og:image" content="' + BASE + 'assets/covers/og/' + r.id + '.jpg">',
+      '  <meta property="og:image:width" content="' + dim[0] + '">', '  <meta property="og:image:height" content="' + dim[1] + '">',
+      '  <meta property="og:image:alt" content="《' + esc(r.title) + '》書封">'].join('\n');
+  }
   function spoilerCta(r) {
     var sp = SPOILERS[r.id];
     if (!sp) return '';
@@ -76,18 +84,44 @@ function buildSite(REVIEWS, opts) {
       '<p><a class="spoiler-link" href="' + spoilerFile(r) + '" data-id="' + esc(r.id) + '" data-kind="spoiler" data-list="review_spoiler_cta" data-pos="1">' + esc(spoilerH1(r)) + '</a></p>' +
       '<p class="meta">內含完整劇情與結局。' + (sp.progress ? '寫到' + esc(sp.progress) + '。' : '') + '</p></section>';
   }
-  function bodyHtml(body) {   // 「## 」小標題、「### 」次標題、連續的「- 」條列
-    var out = [], li = [];
+  function bodyHtml(body) {   // 「## 」小標題（帶 id="s-N" 給目錄跳轉）、「### 」次標題、連續的「- 」條列
+    var out = [], li = [], h2 = 0;
     function flush() { if (li.length) { out.push('<ul>' + li.join('') + '</ul>'); li = []; } }
     body.forEach(function (p) {
       if (p.indexOf('- ') === 0) { li.push('<li>' + esc(p.slice(2)) + '</li>'); return; }
       flush();
       var m = /^(#{2,3})\s+(.+)$/.exec(p);
-      out.push(m ? '<h' + m[1].length + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '<p>' + esc(p) + '</p>');
+      out.push(m ? '<h' + m[1].length + (m[1].length === 2 ? ' id="s-' + (++h2) + '"' : '') + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '<p>' + esc(p) + '</p>');
     });
     flush();
     return out;
   }
+  function SERIES_DATA() { return (opts && opts.series) || []; }
+  /* 長篇心得的目錄（## 小標題 4 個以上才出現）與系列導覽（window.SERIES）。build/seo-build.js 與 assets/app.js 各一份，要同步 */
+  function tocHtml(body) {
+    var hs = body.filter(function (p) { return /^##\s/.test(p); }).map(function (p) { return p.replace(/^##\s+/, ''); });
+    if (hs.length < 4) return '';
+    return '<nav class="toc" aria-label="本篇目錄"><details><summary>目錄<small>' + hs.length + ' 節，點標題直接跳過去</small></summary><ol>' +
+      hs.map(function (h, i) { return '<li><a href="#s-' + (i + 1) + '">' + esc(h) + '</a></li>'; }).join('') + '</ol></details></nav>';
+  }
+  function seriesOf(r) {
+    var list = SERIES_DATA();
+    for (var i = 0; i < list.length; i++) { var k = list[i].ids.indexOf(r.id); if (k > -1) return { s: list[i], i: k }; }
+    return null;
+  }
+  function seriesTag(r) { var x = seriesOf(r); return x ? x.s.name + '第 ' + (x.i + 1) + ' 本（共 ' + x.s.ids.length + ' 本）' : ''; }
+  function seriesNav(r, findById) {
+    var x = seriesOf(r);
+    if (!x) return '';
+    function link(id, cls, label, pos) {
+      var b = id && findById(id);
+      return b ? '<a class="' + cls + '" href="' + esc(b.id) + '.html" data-id="' + esc(b.id) + '" data-list="series_nav" data-pos="' + pos + '"><small>' + label + '</small>《' + esc(b.title) + '》</a>' : '<span class="' + cls + ' none"><small>' + label + '</small>' + (cls === 'prev' ? '這是第一本' : '這是最後一本') + '</span>';
+    }
+    return '<nav class="series-nav" aria-label="系列導覽"><p class="series-head"><b>' + esc(x.s.name) + '</b>第 ' + (x.i + 1) + ' 本，共 ' + x.s.ids.length + ' 本' +
+      (x.s.list ? '<a href="' + esc(x.s.list) + '.html">看閱讀順序</a>' : '') + '</p><div class="series-links">' +
+      link(x.s.ids[x.i - 1], 'prev', '上一本', 1) + link(x.s.ids[x.i + 1], 'next', '下一本', 2) + '</div></nav>';
+  }
+
   /* 分類頁網址：cat-<分類>.html、cat-<分類>-<子分類>.html（build/seo-build.js 與 assets/app.js 各有一份，要同步） */
   var LISTS = (opts && opts.lists) || [];
   /* 書單類型（window.LISTS 每篇的 type 欄位）：書單總覽依這個順序分組；沒填的歸「其他書單」 */
@@ -100,7 +134,7 @@ function buildSite(REVIEWS, opts) {
   /* 導覽列下拉選單與頁尾網站地圖：直接寫進每一頁的 HTML，搜尋引擎不必執行程式就讀得到所有分類頁與書單的連結。
    * 內容與順序要和 assets/app.js 的 initSiteNav() 一致（那邊只在頁面沒有這兩塊時才動態補上）。
    * 分類順序依 data/reviews.js 的 CATEGORIES、SUBCATEGORIES（opts.categories、opts.subcategories），只列有心得的。 */
-  var APP_VER = '20261029a';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
+  var APP_VER = '20261029b';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
   function countOf(cat, sub) { return REVIEWS.filter(function (r) { return r.category === cat && (!sub || r.subcategory === sub); }).length; }
   function uniq(list) { return list.filter(function (x, i) { return x && list.indexOf(x) === i; }); }
   var LIVE_CATS = ((opts && opts.categories) || uniq(REVIEWS.map(function (r) { return r.category; })))
@@ -231,7 +265,7 @@ function buildSite(REVIEWS, opts) {
       '  <meta property="og:image" content="' + BASE + 'assets/og.png">',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261029a">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261029b">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -286,10 +320,10 @@ function buildSite(REVIEWS, opts) {
       '  <!-- 追蹤程式必須最先載入：Consent 預設值 → dataLayer 脈絡 → GTM -->',
       '  <script src="assets/analytics.js"></script>',
       '  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">',
-      '  <meta property="og:image" content="' + BASE + 'assets/og.png">',
+      ogImage(r),
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261029a">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261029b">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -302,14 +336,16 @@ function buildSite(REVIEWS, opts) {
       '      ' + cover(r, 'lg'),
       '      <div><span class="tag">' + esc(r.category + (r.subcategory ? '・' + r.subcategory : '')) + '</span><h1>' + esc(seoH1(r)) + '</h1>',
       '      <p class="meta">' + esc(r.author) + '</p><p class="rating">' + seal(r.rating, 'lg') + '<span class="stars big" aria-hidden="true">' + stars(r.rating) + '</span></p>',
-      '      <p class="meta">' + r.date + '</p>',
+      '      <p class="meta">' + r.date + (seriesTag(r) ? ' · ' + esc(seriesTag(r)) : '') + '</p>',
       '      <p class="intro">' + esc(intro) + '</p>',
       '      <p class="lead">' + esc(r.summary) + '</p></div>',
       '    </header>',
+      tocHtml(r.body) ? '    ' + tocHtml(r.body) : '',
       '    <article id="article">',
       bodyHtml(r.body).map(function (x) { return '      ' + x; }).join('\n'),
       '      <p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p>',
       '    </article>',
+      seriesNav(r, byId) ? '    ' + seriesNav(r, byId) : '',
       spoilerCta(r),
       '    <section class="related"><h2>同類型心得</h2><ul>',
       rel.map(function (x) { return '      <li><a href="' + esc(x.id) + '.html">' + esc(seoH1(x)) + '</a>（' + esc(x.author) + '）</li>'; }).join('\n'),
@@ -356,10 +392,10 @@ function buildSite(REVIEWS, opts) {
       '  <!-- 追蹤程式必須最先載入：Consent 預設值 → dataLayer 脈絡 → GTM -->',
       '  <script src="assets/analytics.js"></script>',
       '  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">',
-      '  <meta property="og:image" content="' + BASE + 'assets/og.png">',
+      ogImage(r),
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261029a">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261029b">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -376,6 +412,7 @@ function buildSite(REVIEWS, opts) {
       '      <p class="meta">' + sp.date + (sp.updated && sp.updated !== sp.date ? '・更新 ' + sp.updated : '') + ' · 約 ' + mins + ' 分鐘閱讀</p>',
       '      <p class="lead">' + esc(sp.summary) + '</p></div>',
       '    </header>',
+      tocHtml(sp.body) ? '    ' + tocHtml(sp.body) : '',
       '    <article id="article">',
       bodyHtml(sp.body).map(function (x) { return '      ' + x; }).join('\n'),
       '    </article>',

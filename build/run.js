@@ -10,5 +10,5 @@ const buildSite = require('./seo-build.js');
 const pages = {};
 buildSite.HAND_PAGES.forEach(name => { pages[name] = fs.readFileSync(path.join(root, name), 'utf8'); });
 const files = buildSite(ctx.window.REVIEWS, { today: process.argv[2], lists: ctx.window.LISTS || [], news: ctx.window.NEWS || [],
-  categories: ctx.window.CATEGORIES, subcategories: ctx.window.SUBCATEGORIES || {}, pages, spoilers: ctx.window.SPOILERS || [] });
+  categories: ctx.window.CATEGORIES, subcategories: ctx.window.SUBCATEGORIES || {}, pages, spoilers: ctx.window.SPOILERS || [], series: ctx.window.SERIES || [] });
 for (const [name, content] of Object.entries(files)) { fs.writeFileSync(path.join(root, name), content); console.log('wrote', name, Buffer.byteLength(content)); }
