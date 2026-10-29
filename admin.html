@@ -246,6 +246,9 @@
       body: $('body').value.split(/\n\s*\n/).map(function (p) { return p.replace(/\s*\n\s*/g, '').trim(); }).filter(Boolean)
     };
     if (!hasSub) delete r.subcategory;
+    // 書封（assets/covers/<id>.webp）表單上沒有欄位：編輯既有心得時沿用原本的值，免得發布後書封不見
+    var old = REVIEWS.filter(function (x) { return x.id === r.id; })[0];
+    if (old && old.cover) { r.cover = old.cover; r.coverSize = old.coverSize; }
     return r;
   }
   function validate(r) {

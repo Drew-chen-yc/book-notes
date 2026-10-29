@@ -141,12 +141,14 @@ function buildSite(REVIEWS, opts) {
       '<span class="row-main"><span class="row-title">' + esc(n.title) + '</span><span class="row-sub nsrc">' + esc([n.scope, n.source].filter(Boolean).join(' · ')) + '</span></span></a>';
   }
   var NEWS_NAV = NEWS.length ? '<a href="news.html">書訊</a>' : '';
+  /* 導覽列最右邊的搜尋按鈕：有 JS 時 app.js 會展開「分類＋關鍵字」搜尋框；沒有 JS 時就是連到心得列表的搜尋欄 */
+  var NAV_SEARCH = '<a class="nav-search" href="reviews.html#search" aria-label="搜尋心得"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span class="sr-only">搜尋</span></a>';
   var NAV = '<nav><div class="dd"><a href="reviews.html" aria-haspopup="true">心得</a><div class="dd-menu">' +
     '<a href="reviews.html"><b>全部心得</b><small>' + REVIEWS.length + '</small></a>' + LIVE_CATS.map(function (c) {
       return '<a href="' + catHref(c) + '"><b>' + esc(c) + '</b><small>' + countOf(c) + '</small></a>' + liveSubs(c).map(function (s) {
         return '<a class="dd-sub" href="' + catHref(c, s) + '">' + esc(s) + '<small>' + countOf(c, s) + '</small></a>';
       }).join('');
-    }).join('') + '</div></div>' + NEWS_NAV + '<a href="lists.html">書單</a><a href="books.html">全部的書</a><a href="about.html">關於</a></nav>';
+    }).join('') + '</div></div>' + NEWS_NAV + '<a href="lists.html">書單</a><a href="books.html">全部的書</a><a href="about.html">關於</a>' + NAV_SEARCH + '</nav>';
   function mapCol(title, links) {   // links = [[網址, 文字], ...]
     return '<div><h3>' + esc(title) + '</h3>' + links.map(function (l) { return '<a href="' + l[0] + '">' + esc(l[1]) + '</a>'; }).join('') + '</div>';
   }
@@ -156,7 +158,7 @@ function buildSite(REVIEWS, opts) {
       return mapCol(c + '類型', liveSubs(c).map(function (s) { return [catHref(c, s), s + '（' + countOf(c, s) + '）']; }));
     }).join('') +
     mapCol('書單', LISTS_NEW.slice(0, 6).map(function (l) { return [l.id + '.html', l.title]; }).concat(LISTS.length > 6 ? [['lists.html', '全部 ' + LISTS.length + ' 份書單']] : [])) +
-    mapCol('網站', [['index.html', '首頁'], ['reviews.html', '全部心得']].concat(NEWS.length ? [['news.html', '書訊']] : [], [['lists.html', '書單總覽'], ['books.html', '全部的書（總表）'], ['feedback.html', '推薦好書／意見回饋'], ['about.html', '關於']])) + '</nav>';
+    mapCol('網站', [['index.html', '首頁'], ['reviews.html', '全部心得']].concat(NEWS.length ? [['news.html', '書訊']] : [], [['lists.html', '書單總覽'], ['books.html', '全部的書（總表）'], ['resources.html', '閱讀資源：圖書館與電子書'], ['feedback.html', '推薦好書／意見回饋'], ['about.html', '關於']])) + '</nav>';
   var FOOT = [
     '  <footer class="site-footer"><div class="wrap">',
     '    ' + SITEMAP,
@@ -174,7 +176,12 @@ function buildSite(REVIEWS, opts) {
   function genreKey(r) { return ({ '仙俠': 'xian', '玄幻': 'xuan', '奇幻': 'fantasy', '科幻': 'scifi', '推理': 'mystery', '懸疑': 'mystery', '文學': 'lit' })[r.subcategory] || 'plain'; }
   /* 評分印章：全站同一顆，size = xs（行內）／sm（卡片）／lg（心得頁） */
   function seal(n, size) { return '<span class="seal seal-' + size + '" role="img" aria-label="' + n + ' 顆星">' + n + '<i aria-hidden="true">★</i></span>'; }
+  /* 書封：有 r.cover（assets/covers/<id>.webp，2026-10-29 起）就用圖片；沒有的書用原本的色塊書封 */
   function cover(r, size) {
+    if (r.cover) {
+      var dim = r.coverSize || [300, 430];
+      return '<div class="cover cover-' + size + ' cover-img" style="--c:' + r.color + '"><img src="' + esc(r.cover) + '" alt="《' + esc(r.title) + '》書封" width="' + dim[0] + '" height="' + dim[1] + '"' + (size === 'lg' ? '' : ' loading="lazy"') + ' decoding="async"></div>';
+    }
     return '<div class="cover cover-' + size + '" data-g="' + genreKey(r) + '" style="--c:' + r.color + '" aria-hidden="true">' +
       '<em>' + esc(r.subcategory || r.category) + '</em><span>' + esc(r.title) + '</span><small>' + esc(r.author) + '</small></div>';
   }
@@ -252,7 +259,7 @@ function buildSite(REVIEWS, opts) {
       inLanguage: 'zh-Hant-TW',
       reviewBody: r.summary,
       author: { '@type': 'Organization', name: '折角 Dogeared', url: BASE },
-      itemReviewed: Object.assign({ '@type': 'Book', name: r.title, author: { '@type': 'Person', name: r.author } },
+      itemReviewed: Object.assign({ '@type': 'Book', name: r.title, author: { '@type': 'Person', name: r.author } }, r.cover ? { image: BASE + r.cover } : {},
         r.subcategory ? { genre: r.category + '／' + r.subcategory } : {}),
       reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5, worstRating: 1 }
     };
@@ -561,7 +568,7 @@ function buildSite(REVIEWS, opts) {
   });
 
   var urls = [{ loc: BASE, lastmod: TODAY }, { loc: BASE + 'about.html', lastmod: TODAY }]
-    .concat([{ loc: BASE + 'reviews.html', lastmod: TODAY }, { loc: BASE + 'lists.html', lastmod: TODAY }, { loc: BASE + 'feedback.html', lastmod: TODAY }])
+    .concat([{ loc: BASE + 'reviews.html', lastmod: TODAY }, { loc: BASE + 'lists.html', lastmod: TODAY }, { loc: BASE + 'feedback.html', lastmod: TODAY }, { loc: BASE + 'resources.html', lastmod: TODAY }])
     .concat(catPages.map(function (f) { return { loc: BASE + f, lastmod: TODAY }; }))
     .concat(REVIEWS.map(function (r) { return { loc: BASE + r.id + '.html', lastmod: reviewMod(r) }; }))
     .concat(REVIEWS.filter(function (r) { return SPOILERS[r.id]; }).map(function (r) { return { loc: BASE + spoilerFile(r), lastmod: spoilerDate(SPOILERS[r.id]) }; }))
@@ -622,5 +629,5 @@ function buildSite(REVIEWS, opts) {
   return files;
 }
 /* 要經過 build 的手寫頁；run.js 與後台都依這份清單讀檔 */
-buildSite.HAND_PAGES = ['index.html', 'reviews.html', 'about.html', 'feedback.html', 'review.html'];
+buildSite.HAND_PAGES = ['index.html', 'reviews.html', 'about.html', 'feedback.html', 'review.html', 'resources.html'];
 if (typeof module !== 'undefined') module.exports = buildSite;

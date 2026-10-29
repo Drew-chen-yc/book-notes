@@ -64,6 +64,17 @@
   function liveSubs(cat) { return ((window.SUBCATEGORIES || {})[cat] || []).filter(function (x) { return countOf(cat, x) > 0; }); }
   /* 分類顯示：有子分類時顯示「小說・仙俠」 */
   var SUBS = window.SUBCATEGORIES || {};
+  /* 搜尋用：分類選單的選項（value = 「分類」或「分類|子分類」）與關鍵字比對（空白分隔的每個詞都要出現） */
+  function catOptions(selected) {
+    return '<option value="">全部分類</option>' + liveCats().map(function (c) {
+      return '<option value="' + esc(c) + '"' + (selected === c ? ' selected' : '') + '>' + esc(c) + '（' + countOf(c) + '）</option>' + liveSubs(c).map(function (x) {
+        var v = c + '|' + x;
+        return '<option value="' + esc(v) + '"' + (selected === v ? ' selected' : '') + '>　' + esc(c) + '・' + esc(x) + '（' + countOf(c, x) + '）</option>';
+      }).join('');
+    }).join('');
+  }
+  function norm(t) { return String(t || '').toLowerCase().replace(/[\uff01-\uff5e]/g, function (ch) { return String.fromCharCode(ch.charCodeAt(0) - 0xfee0); }).replace(/\s+/g, ' '); }
+  function matchAll(hay, q) { hay = norm(hay); return norm(q).split(' ').filter(Boolean).every(function (w) { return hay.indexOf(w) > -1; }); }
   function catLabel(r) { return r.category + (r.subcategory ? '・' + r.subcategory : ''); }
   /* 搜尋字若含 Email 或電話樣式，送進 GA 前先遮蔽（Google 政策禁止把個資送進 GA） */
   function redactPII(t) {
@@ -84,7 +95,12 @@
   function genreKey(r) { return ({ '仙俠': 'xian', '玄幻': 'xuan', '奇幻': 'fantasy', '科幻': 'scifi', '推理': 'mystery', '懸疑': 'mystery', '文學': 'lit' })[r.subcategory] || 'plain'; }
   /* 評分印章：全站同一顆，size = xs（行內）／sm（卡片）／lg（心得頁） */
   function seal(n, size) { return '<span class="seal seal-' + size + '" role="img" aria-label="' + n + ' 顆星">' + n + '<i aria-hidden="true">★</i></span>'; }
+  /* 書封：有 r.cover（assets/covers/<id>.webp，2026-10-29 起）就用圖片；沒有的書用原本的色塊書封 */
   function cover(r, size) {
+    if (r.cover) {
+      var dim = r.coverSize || [300, 430];
+      return '<div class="cover cover-' + size + ' cover-img" style="--c:' + r.color + '"><img src="' + esc(r.cover) + '" alt="《' + esc(r.title) + '》書封" width="' + dim[0] + '" height="' + dim[1] + '"' + (size === 'lg' ? '' : ' loading="lazy"') + ' decoding="async"></div>';
+    }
     return '<div class="cover cover-' + size + '" data-g="' + genreKey(r) + '" style="--c:' + r.color + '" aria-hidden="true">' +
       '<em>' + esc(r.subcategory || r.category) + '</em><span>' + esc(r.title) + '</span><small>' + esc(r.author) + '</small></div>';
   }
@@ -105,6 +121,10 @@
     root.addEventListener('click', function (e) {
       var a = e.target.closest('a[data-list]');
       if (!a) return;
+      if (a.dataset.kind === 'list') {   // 搜尋結果裡的書單
+        track('select_content', { content_type: 'list', content_id: a.dataset.id, list_name: a.dataset.list, list_position: Number(a.dataset.pos) });
+        return;
+      }
       if (a.dataset.kind === 'news') {   // 書訊列：content_type = news，另帶 news_type
         track('select_content', { content_type: 'news', content_id: a.dataset.id, list_name: a.dataset.list,
           list_position: Number(a.dataset.pos), news_type: a.dataset.type });
@@ -156,6 +176,20 @@
     subchips.setAttribute('role', 'group'); subchips.setAttribute('aria-label', '子分類篩選');
     chips.parentNode.insertBefore(subchips, chips.nextSibling);
 
+    /* 分類選單（和搜尋框同一排）：跟下面的分類標籤同步 */
+    var sel = $('#search-cat'), count = $('#result-count'), listHits = $('#list-hits');
+    function syncSel() { if (sel) sel.value = state.cat === '全部' ? '' : state.cat + (state.sub !== '全部' ? '|' + state.sub : ''); }
+    if (sel) {
+      sel.innerHTML = catOptions('');
+      sel.addEventListener('change', function () {
+        var v = sel.value.split('|');
+        state.cat = v[0] || '全部'; state.sub = v[1] || '全部'; state.page = 1;
+        chips.querySelectorAll('.chip').forEach(function (c) { c.classList.toggle('active', c.dataset.cat === state.cat); });
+        renderSubchips();
+        var n = render();
+        track('filter_category', Object.assign({ book_category: state.cat, results_count: n }, state.sub !== '全部' ? { book_subcategory: state.sub } : {}));
+      });
+    }
     chips.innerHTML = ['全部'].concat(liveCats()).map(function (c) {
       return '<button type="button" class="chip' + (c === '全部' ? ' active' : '') + '" data-cat="' + c + '">' + c + ' <small>' + (c === '全部' ? REVIEWS.length : countOf(c)) + '</small></button>';
     }).join('');
@@ -165,12 +199,25 @@
       return REVIEWS.filter(function (r) {
         var okCat = state.cat === '全部' || r.category === state.cat;
         var okSub = state.sub === '全部' || r.subcategory === state.sub;
-        var hay = (r.title + r.author + r.category + (r.subcategory || '') + r.summary + r.tags.join(' ')).toLowerCase();
-        return okCat && okSub && (!q || hay.indexOf(q) > -1);
+        var hay = [r.title, r.author, r.category, r.subcategory || '', r.summary, r.tags.join(' ')].join(' ');
+        return okCat && okSub && (!q || matchAll(hay, q));
       });
     }
     function render() {
       var rows = filtered();
+      syncSel();
+      var label = (state.cat === '全部' ? '' : state.cat + (state.sub !== '全部' ? '・' + state.sub : ''));
+      if (count) {
+        count.hidden = !(state.q.trim() || label);
+        count.textContent = (label ? label + ' ' : '') + (state.q.trim() ? '「' + state.q.trim() + '」' : '') + '找到 ' + rows.length + ' 篇';
+      }
+      if (listHits) {   // 關鍵字也比對書單標題與說明
+        var hits = !state.q.trim() ? [] : (window.LISTS || []).filter(function (l) { return matchAll(l.title + ' ' + (l.description || ''), state.q); }).slice(0, 4);
+        listHits.hidden = !hits.length;
+        listHits.innerHTML = hits.length ? '<b>相關書單</b>' + hits.map(function (l, i) {
+          return '<a href="' + esc(l.id) + '.html" data-id="' + esc(l.id) + '" data-kind="list" data-list="search_lists" data-pos="' + (i + 1) + '">' + esc(l.title) + '</a>';
+        }).join('') : '';
+      }
       var pages = Math.max(1, Math.ceil(rows.length / PER_PAGE));
       state.page = Math.min(state.page, pages);
       var start = (state.page - 1) * PER_PAGE;
@@ -190,6 +237,8 @@
     }
     render();
     bindCardClicks(list);
+    if (listHits) bindCardClicks(listHits);
+    if (location.hash === '#search') setTimeout(function () { input.focus(); }, 50);
     pager.addEventListener('click', function (e) {
       var b = e.target.closest('.pg');
       if (!b || b.disabled) return;
@@ -238,7 +287,7 @@
         var term = input.value.trim();
         if (term.length >= 2 && term !== lastSent) {
           lastSent = term;
-          track('search', { search_term: redactPII(term), results_count: n });
+          track('search', Object.assign({ search_term: redactPII(term), results_count: filtered().length, book_category: state.cat }, state.sub !== '全部' ? { book_subcategory: state.sub } : {}));
         }
       }, 1000);
     });
@@ -522,10 +571,43 @@
           return col(esc(c) + '類型', liveSubs(c).map(function (x) { return a(catHref(c, x), x + '（' + countOf(c, x) + '）'); }));
         }).join('') +
         col('書單', newestLists().slice(0, 6).map(function (l) { return a(l.id + '.html', l.title); }).concat((window.LISTS || []).length > 6 ? [a('lists.html', '全部 ' + window.LISTS.length + ' 份書單')] : [])) +
-        col('網站', [a('index.html', '首頁'), a('reviews.html', '全部心得')].concat((window.NEWS || []).length ? [a('news.html', '書訊')] : [], [a('lists.html', '書單總覽'), a('books.html', '全部的書（總表）'), a('feedback.html', '推薦好書／意見回饋'), a('about.html', '關於')]));
+        col('網站', [a('index.html', '首頁'), a('reviews.html', '全部心得')].concat((window.NEWS || []).length ? [a('news.html', '書訊')] : [], [a('lists.html', '書單總覽'), a('books.html', '全部的書（總表）'), a('resources.html', '閱讀資源：圖書館與電子書'), a('feedback.html', '推薦好書／意見回饋'), a('about.html', '關於')]));
       foot.parentNode.insertBefore(map, foot);
     }
   }
+  /* 導覽列的搜尋按鈕：展開「分類＋關鍵字」搜尋框，送出到心得列表（reviews.html?q=&cat=&sub=）。心得列表頁本身就直接跳到搜尋欄 */
+  function initHeaderSearch() {
+    var btn = document.querySelector('.site-header .nav-search');
+    if (!btn) return;
+    var panel = null;
+    btn.addEventListener('click', function (e) {
+      if (page === 'reviews' && $('#search')) { e.preventDefault(); $('#search').focus(); $('#search').scrollIntoView({ block: 'center' }); return; }
+      e.preventDefault();
+      if (!panel) {
+        panel = document.createElement('form');
+        panel.className = 'nav-search-panel wrap'; panel.action = 'reviews.html'; panel.method = 'get'; panel.setAttribute('role', 'search');
+        panel.innerHTML = '<label class="sr-only" for="ns-cat">分類</label><select id="ns-cat" name="c">' + catOptions('') + '</select>' +
+          '<label class="sr-only" for="ns-q">關鍵字</label><input id="ns-q" name="q" type="search" placeholder="書名、作者或關鍵字…" autocomplete="off">' +
+          '<button class="btn" type="submit">搜尋</button>';
+        panel.addEventListener('submit', function (ev) {
+          ev.preventDefault();
+          var q = panel.q.value.trim(), v = panel.c.value.split('|'), u = new URLSearchParams();
+          if (q) u.set('q', q);
+          if (v[0]) u.set('cat', v[0]);
+          if (v[1]) u.set('sub', v[1]);
+          location.href = 'reviews.html' + (u.toString() ? '?' + u.toString() : '');
+        });
+        document.querySelector('.site-header').appendChild(panel);
+      } else { panel.hidden = !panel.hidden; }
+      if (!panel.hidden) panel.q.focus();
+    });
+  }
+  initHeaderSearch();
+  /* 閱讀資源頁：外部連結點擊 */
+  if (page === 'resources') $('main').addEventListener('click', function (e) {
+    var a = e.target.closest('a.res');
+    if (a) track('click_resource', { resource_name: a.dataset.res, resource_type: a.dataset.type, link_url: a.href });
+  });
   initSiteNav();   // 書單與總表的連結也送 select_content
   initUnsubscribe();
   initFeedback();

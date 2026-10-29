@@ -119,6 +119,7 @@
 
   function track(eventName, params) {
     params = params || {};
+    if (eventName === 'view_review' && params.review_id) params = Object.assign({}, params, { session_review_count: noteReview(params.review_id) });
     window.dataLayer.push({ event_params: null });               // 清空上一個事件的參數
     window.dataLayer.push({ event: eventName, event_params: params, user_properties: userProperties() });
     if (DEBUG) { console.log('[track]', eventName, params); debugLog(eventName, params); }
@@ -224,6 +225,54 @@
     var t = 0;
     return function () { var n = Date.now(); if (n - t >= ms) { t = n; fn(); } };
   }
+
+  /* ---------- 9. 主要轉換：停留時長、連續看幾篇（2026-10-29） ----------
+   * 工作階段跟 GA4 預設一致：30 分鐘沒有動作就重新開始。存在 localStorage（bn_sess），同一個瀏覽器開多個分頁也算同一段。
+   * 停留時長：分頁可見、視窗有焦點、而且 60 秒內有捲動／點擊／按鍵／觸控／滑鼠移動，才累計秒數，跨頁加總。
+   *   累計到 60、180、300、600 秒各送一次 engagement_milestone（engaged_seconds）；到 180 秒另送 stay_3min（主要轉換）。
+   * 連續看幾篇：同一段工作階段看過幾篇不同的書（心得頁與重雷心得頁都算，同一本書只算一次）。
+   *   每次 view_review 帶 session_review_count；第 2、3、5 篇各送一次 multi_review；到第 3 篇另送 read_3_reviews（主要轉換）。 */
+  var SESS_KEY = 'bn_sess', SESS_GAP = 30 * 60 * 1000, IDLE = 60 * 1000;
+  var TIME_MARKS = [60, 180, 300, 600], TIME_GOAL = 180, READ_MARKS = [2, 3, 5], READ_GOAL = 3;
+  function loadSess() {
+    var s = null, now = Date.now();
+    try { s = JSON.parse(safeGet(SESS_KEY) || 'null'); } catch (e) { s = null; }
+    if (!s || !s.last || now - s.last > SESS_GAP) s = { start: now, last: now, sec: 0, books: [], sent: {} };
+    return s;
+  }
+  function saveSess(s) { safeSet(SESS_KEY, JSON.stringify(s)); }
+  function noteReview(id) {
+    var s = loadSess();
+    if (s.books.indexOf(id) < 0) s.books.push(id);
+    s.last = Date.now();
+    var n = s.books.length, fire = [];
+    READ_MARKS.forEach(function (m) { if (n >= m && !s.sent['r' + m]) { s.sent['r' + m] = 1; fire.push(m); } });
+    saveSess(s);
+    setTimeout(function () {   // 讓 view_review 先送出
+      fire.forEach(function (m) {
+        track('multi_review', { session_review_count: m });
+        if (m === READ_GOAL) track('read_3_reviews', { session_review_count: m });
+      });
+    }, 0);
+    return n;
+  }
+  var lastInput = Date.now();
+  ['scroll', 'click', 'keydown', 'touchstart', 'mousemove', 'wheel'].forEach(function (ev) {
+    window.addEventListener(ev, function () { lastInput = Date.now(); }, { passive: true });
+  });
+  setInterval(function () {
+    var now = Date.now();
+    if (document.visibilityState !== 'visible' || !document.hasFocus() || now - lastInput > IDLE) return;
+    var s = loadSess();
+    s.sec += 1; s.last = now;
+    var fire = [];
+    TIME_MARKS.forEach(function (m) { if (s.sec >= m && !s.sent['t' + m]) { s.sent['t' + m] = 1; fire.push(m); } });
+    saveSess(s);
+    fire.forEach(function (m) {
+      track('engagement_milestone', { engaged_seconds: m });
+      if (m === TIME_GOAL) track('stay_3min', { engaged_seconds: m });
+    });
+  }, 1000);
 
   window.BN = { track: track, bumpProfile: bumpProfile, trackReading: trackReading, userProperties: userProperties };
 

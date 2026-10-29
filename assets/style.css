@@ -446,3 +446,37 @@ a.chip { text-decoration: none; display: inline-block; }
 .spoiler-warn { margin: 14px 0 0; padding: 14px 18px; border: 1px solid var(--danger); border-radius: var(--radius); background: var(--surface); color: var(--text); }
 .spoiler-warn b { color: var(--danger); margin-right: 4px; }
 .tag.tag-spoiler { background: var(--danger); color: var(--surface); }
+
+/* 搜尋（2026-10-29）：心得列表的「分類＋關鍵字」同一排、導覽列的搜尋按鈕與展開框 */
+.search-row { display: flex; gap: 8px; margin: 12px 0 8px; }
+.search-row select { flex: 0 0 auto; width: auto; max-width: 42%; }
+.search-row input { flex: 1 1 auto; min-width: 0; width: auto; margin: 0; }
+.result-count { margin: 0 0 8px; }
+.list-hits { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 16px; font-size: 15px; }
+.list-hits b { margin-right: 4px; }
+.list-hits a { padding: 4px 12px; border-radius: 999px; background: var(--chip); text-decoration: none; color: var(--text); }
+.site-header nav a.nav-search { display: inline-flex; align-items: center; justify-content: center; }
+.nav-search .ico { width: 18px; height: 18px; }
+.nav-search-panel { display: flex; gap: 8px; padding-top: 4px; padding-bottom: 14px; }
+.nav-search-panel[hidden] { display: none; }
+.nav-search-panel select { flex: 0 0 auto; width: auto; max-width: 40%; }
+.nav-search-panel input { flex: 1 1 0; min-width: 0; width: auto; margin: 0; }
+.nav-search-panel .btn { flex: none; }
+@media (max-width: 560px) {
+  .site-header nav a.nav-search { flex: 0 0 40px; }
+  .search-row, .nav-search-panel { flex-wrap: wrap; }
+  .search-row select, .nav-search-panel select { max-width: none; flex: 1 1 100%; }
+}
+
+/* 閱讀資源頁（2026-10-29） */
+.res-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0 8px; }
+.res { display: block; padding: 16px 18px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); text-decoration: none; color: var(--text); }
+.res:hover { border-color: var(--accent); }
+.res b { display: block; font-size: 17px; margin-bottom: 4px; color: var(--accent); }
+.res span { display: block; font-size: 15px; color: var(--muted); line-height: 1.6; }
+@media (max-width: 560px) { .res-list { grid-template-columns: 1fr; } }
+
+/* 書封圖片（2026-10-29）：沿用色塊書封的尺寸，圖片填滿；拿掉色塊書封的裝飾 */
+.cover.cover-img { padding: 0; background: var(--chip); box-shadow: 0 6px 18px rgba(31,51,68,.18); }
+.cover.cover-img::before, .cover.cover-img::after { display: none; }
+.cover.cover-img img { display: block; width: 100%; height: 100%; object-fit: cover; }

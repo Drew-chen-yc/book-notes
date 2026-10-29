@@ -14,6 +14,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-26",
     "color": "#6a4c93",
+    "cover": "assets/covers/nov2691.webp",
+    "coverSize": [
+      300,
+      390
+    ],
     "tags": [
       "社會派",
       "第二人稱",
@@ -68,6 +73,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-26",
     "color": "#4f518c",
+    "cover": "assets/covers/nov2690.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "穿越",
       "重生",
@@ -116,6 +126,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-26",
     "color": "#6a4c93",
+    "cover": "assets/covers/nov2689.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "美食",
       "年代",
@@ -164,6 +179,11 @@ window.REVIEWS = [
     "rating": 1.5,
     "date": "2026-10-23",
     "color": "#5b4b8a",
+    "cover": "assets/covers/nov2688.webp",
+    "coverSize": [
+      300,
+      402
+    ],
     "tags": [
       "神魔亂鬥",
       "獵鬼小組",
@@ -216,6 +236,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-19",
     "color": "#5b4b8a",
+    "cover": "assets/covers/nov2687.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "御獸",
       "航海",
@@ -269,6 +294,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-19",
     "color": "#46538f",
+    "cover": "assets/covers/nov2686.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "兩界穿梭",
       "科技修真",
@@ -322,6 +352,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#4f518c",
+    "cover": "assets/covers/nov2685.webp",
+    "coverSize": [
+      300,
+      447
+    ],
     "tags": [
       "家族修仙",
       "群像",
@@ -375,6 +410,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-19",
     "color": "#6a4c93",
+    "cover": "assets/covers/nov2684.webp",
+    "coverSize": [
+      300,
+      448
+    ],
     "tags": [
       "賽博朋克",
       "黑色幽默",
@@ -428,6 +468,11 @@ window.REVIEWS = [
     "rating": 3.5,
     "date": "2026-10-19",
     "color": "#2f5d8a",
+    "cover": "assets/covers/nov2683.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "永夜",
       "火泉",
@@ -481,6 +526,11 @@ window.REVIEWS = [
     "rating": 3.5,
     "date": "2026-10-19",
     "color": "#6b705c",
+    "cover": "assets/covers/nov2682.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "高武",
       "港風",
@@ -534,6 +584,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-19",
     "color": "#35524a",
+    "cover": "assets/covers/nov2681.webp",
+    "coverSize": [
+      300,
+      450
+    ],
     "tags": [
       "陣法",
       "凡人流",
@@ -587,6 +642,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-19",
     "color": "#5b4b8a",
+    "cover": "assets/covers/nov2680.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "權謀",
       "雙面間諜",
@@ -641,6 +701,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#35524a",
+    "cover": "assets/covers/nov2679.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "陣營對抗",
       "天賦樹",
@@ -686,6 +751,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-19",
     "color": "#2d6a6a",
+    "cover": "assets/covers/nov2678.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "升級",
       "換地圖",
@@ -732,6 +802,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#8a5a44",
+    "cover": "assets/covers/nov2677.webp",
+    "coverSize": [
+      300,
+      445
+    ],
     "tags": [
       "異世界",
       "搞笑",
@@ -777,6 +852,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-19",
     "color": "#4f518c",
+    "cover": "assets/covers/nov2676.webp",
+    "coverSize": [
+      300,
+      429
+    ],
     "tags": [
       "蒸汽龐克",
       "修真",
@@ -868,6 +948,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-19",
     "color": "#51624f",
+    "cover": "assets/covers/nov2674.webp",
+    "coverSize": [
+      300,
+      452
+    ],
     "tags": [
       "文學",
       "推理",
@@ -912,6 +997,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#2f5d8a",
+    "cover": "assets/covers/nov2673.webp",
+    "coverSize": [
+      300,
+      444
+    ],
     "tags": [
       "醫院",
       "純愛",
@@ -956,6 +1046,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#6b705c",
+    "cover": "assets/covers/nov2672.webp",
+    "coverSize": [
+      300,
+      405
+    ],
     "tags": [
       "校園",
       "社團",
@@ -1000,6 +1095,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#35524a",
+    "cover": "assets/covers/nov2671.webp",
+    "coverSize": [
+      300,
+      420
+    ],
     "tags": [
       "懸疑",
       "心理",
@@ -1044,6 +1144,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-19",
     "color": "#a4572a",
+    "cover": "assets/covers/nov2670.webp",
+    "coverSize": [
+      300,
+      477
+    ],
     "tags": [
       "奇幻",
       "名詠式",
@@ -1088,6 +1193,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-19",
     "color": "#46538f",
+    "cover": "assets/covers/nov2669.webp",
+    "coverSize": [
+      300,
+      376
+    ],
     "tags": [
       "校園",
       "戀愛",
@@ -1132,6 +1242,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#2f5d8a",
+    "cover": "assets/covers/nov2668.webp",
+    "coverSize": [
+      300,
+      444
+    ],
     "tags": [
       "機甲",
       "軍事",
@@ -1176,6 +1291,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#8a5a44",
+    "cover": "assets/covers/nov2667.webp",
+    "coverSize": [
+      300,
+      433
+    ],
     "tags": [
       "愛情喜劇",
       "鬼子",
@@ -1220,6 +1340,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#35524a",
+    "cover": "assets/covers/nov2666.webp",
+    "coverSize": [
+      300,
+      391
+    ],
     "tags": [
       "內力",
       "復仇",
@@ -1264,6 +1389,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-19",
     "color": "#51624f",
+    "cover": "assets/covers/nov2665.webp",
+    "coverSize": [
+      300,
+      421
+    ],
     "tags": [
       "夢",
       "失眠",
@@ -1308,6 +1438,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-19",
     "color": "#2f5d8a",
+    "cover": "assets/covers/nov2664.webp",
+    "coverSize": [
+      300,
+      421
+    ],
     "tags": [
       "失憶",
       "瘋狂",
@@ -1352,6 +1487,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-19",
     "color": "#6b705c",
+    "cover": "assets/covers/nov2663.webp",
+    "coverSize": [
+      300,
+      420
+    ],
     "tags": [
       "運氣",
       "寂寞",
@@ -1396,6 +1536,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#35524a",
+    "cover": "assets/covers/nov2662.webp",
+    "coverSize": [
+      300,
+      420
+    ],
     "tags": [
       "自由",
       "瘋狂",
@@ -1440,6 +1585,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-19",
     "color": "#35524a",
+    "cover": "assets/covers/nov2661.webp",
+    "coverSize": [
+      300,
+      420
+    ],
     "tags": [
       "愛情",
       "救贖",
@@ -1484,6 +1634,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#6a4c93",
+    "cover": "assets/covers/nov2660.webp",
+    "coverSize": [
+      300,
+      424
+    ],
     "tags": [
       "媒體",
       "犯罪",
@@ -1528,6 +1683,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-19",
     "color": "#6a4c93",
+    "cover": "assets/covers/nov2659.webp",
+    "coverSize": [
+      300,
+      420
+    ],
     "tags": [
       "正義",
       "騙術",
@@ -1571,6 +1731,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-19",
     "color": "#4a6fa5",
+    "cover": "assets/covers/nov2658.webp",
+    "coverSize": [
+      300,
+      418
+    ],
     "tags": [
       "殺手法則",
       "短篇",
@@ -1615,6 +1780,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-19",
     "color": "#5b4b8a",
+    "cover": "assets/covers/nov2657.webp",
+    "coverSize": [
+      300,
+      420
+    ],
     "tags": [
       "超級英雄",
       "拳擊",
@@ -1659,6 +1829,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-19",
     "color": "#46538f",
+    "cover": "assets/covers/nov2656.webp",
+    "coverSize": [
+      300,
+      435
+    ],
     "tags": [
       "咖啡店",
       "等待",
@@ -1703,6 +1878,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-19",
     "color": "#8a5a44",
+    "cover": "assets/covers/nov2655.webp",
+    "coverSize": [
+      300,
+      411
+    ],
     "tags": [
       "校園",
       "惡搞",
@@ -1746,6 +1926,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#6a4c93",
+    "cover": "assets/covers/nov2654.webp",
+    "coverSize": [
+      300,
+      419
+    ],
     "tags": [
       "偷窺",
       "人性",
@@ -1790,6 +1975,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-19",
     "color": "#8a5a44",
+    "cover": "assets/covers/nov2653.webp",
+    "coverSize": [
+      300,
+      414
+    ],
     "tags": [
       "時光旅行",
       "咖啡館",
@@ -1833,6 +2023,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-19",
     "color": "#4f518c",
+    "cover": "assets/covers/nov2652.webp",
+    "coverSize": [
+      300,
+      409
+    ],
     "tags": [
       "時光旅行",
       "咖啡館",
@@ -1878,6 +2073,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-19",
     "color": "#6b705c",
+    "cover": "assets/covers/nov2651.webp",
+    "coverSize": [
+      300,
+      423
+    ],
     "tags": [
       "時光旅行",
       "咖啡館",
@@ -1923,6 +2123,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#2f5d8a",
+    "cover": "assets/covers/nov2650.webp",
+    "coverSize": [
+      300,
+      454
+    ],
     "tags": [
       "時光旅行",
       "咖啡館",
@@ -1968,6 +2173,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#a4572a",
+    "cover": "assets/covers/nov2649.webp",
+    "coverSize": [
+      300,
+      446
+    ],
     "tags": [
       "時光旅行",
       "咖啡館",
@@ -2013,6 +2223,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-19",
     "color": "#2f5d8a",
+    "cover": "assets/covers/nov2648.webp",
+    "coverSize": [
+      300,
+      434
+    ],
     "tags": [
       "時光旅行",
       "咖啡館",
@@ -2058,6 +2273,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#4f518c",
+    "cover": "assets/covers/nov2647.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "學院",
       "靈陣",
@@ -2103,6 +2323,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-19",
     "color": "#4a6fa5",
+    "cover": "assets/covers/nov2646.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "石符",
       "宗門",
@@ -2148,6 +2373,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-19",
     "color": "#6b705c",
+    "cover": "assets/covers/nov2645.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "退婚",
       "異火",
@@ -2193,6 +2423,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-19",
     "color": "#7b3f61",
+    "cover": "assets/covers/nov2644.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "氣運",
       "源紋",
@@ -2238,6 +2473,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-03",
     "color": "#2d6a6a",
+    "cover": "assets/covers/nov2643.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "副本",
       "職業",
@@ -2283,6 +2523,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-03",
     "color": "#46538f",
+    "cover": "assets/covers/nov2642.webp",
+    "coverSize": [
+      300,
+      384
+    ],
     "tags": [
       "群像",
       "文筆",
@@ -2328,6 +2573,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-03",
     "color": "#a4572a",
+    "cover": "assets/covers/nov2641.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "重生",
       "兄弟",
@@ -2373,6 +2623,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-03",
     "color": "#2f5d8a",
+    "cover": "assets/covers/nov2640.webp",
+    "coverSize": [
+      300,
+      350
+    ],
     "tags": [
       "懸疑",
       "天賦",
@@ -2417,6 +2672,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-03",
     "color": "#8a5a44",
+    "cover": "assets/covers/nov2639.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "人妖戰爭",
       "守護",
@@ -2461,6 +2721,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-03",
     "color": "#4f518c",
+    "cover": "assets/covers/nov2638.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "劍仙",
       "神話",
@@ -2505,6 +2770,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-03",
     "color": "#8a5a44",
+    "cover": "assets/covers/nov2637.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "修真",
       "兄弟",
@@ -2549,6 +2819,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-03",
     "color": "#6a4c93",
+    "cover": "assets/covers/nov2636.webp",
+    "coverSize": [
+      300,
+      424
+    ],
     "tags": [
       "電競",
       "群像",
@@ -2593,6 +2868,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-03",
     "color": "#7b3f61",
+    "cover": "assets/covers/nov2635.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "精神污染",
       "詭異",
@@ -2637,6 +2917,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-03",
     "color": "#46538f",
+    "cover": "assets/covers/nov2634.webp",
+    "coverSize": [
+      300,
+      426
+    ],
     "tags": [
       "權謀",
       "身世",
@@ -2681,6 +2966,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-03",
     "color": "#6a4c93",
+    "cover": "assets/covers/nov2633.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "凡人流",
       "謹慎",
@@ -2725,6 +3015,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-03",
     "color": "#6b705c",
+    "cover": "assets/covers/nov2632.webp",
+    "coverSize": [
+      300,
+      444
+    ],
     "tags": [
       "星際修真",
       "熱血",
@@ -2769,6 +3064,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-03",
     "color": "#46538f",
+    "cover": "assets/covers/nov2631.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "科學修仙",
       "數學",
@@ -2813,6 +3113,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-03",
     "color": "#6b705c",
+    "cover": "assets/covers/nov2630.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "廢土",
       "玩家流",
@@ -2857,6 +3162,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-03",
     "color": "#46538f",
+    "cover": "assets/covers/nov2629.webp",
+    "coverSize": [
+      300,
+      450
+    ],
     "tags": [
       "遊戲異界",
       "NPC",
@@ -2901,6 +3211,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-03",
     "color": "#a4572a",
+    "cover": "assets/covers/nov2628.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "搞笑",
       "反套路",
@@ -2945,6 +3260,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-03",
     "color": "#4f518c",
+    "cover": "assets/covers/nov2627.webp",
+    "coverSize": [
+      300,
+      450
+    ],
     "tags": [
       "探案",
       "朝堂",
@@ -2989,6 +3309,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-03",
     "color": "#6a4c93",
+    "cover": "assets/covers/nov2626.webp",
+    "coverSize": [
+      300,
+      429
+    ],
     "tags": [
       "廢土",
       "覺醒者",
@@ -3033,6 +3358,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-03",
     "color": "#51624f",
+    "cover": "assets/covers/nov2625.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "經典",
       "悲劇",
@@ -3077,6 +3407,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-03",
     "color": "#35524a",
+    "cover": "assets/covers/nov2624.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "搞笑",
       "無敵流",
@@ -3121,6 +3456,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-03",
     "color": "#4f518c",
+    "cover": "assets/covers/nov2623.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "古典仙俠",
       "緣法",
@@ -3165,6 +3505,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-03",
     "color": "#5b4b8a",
+    "cover": "assets/covers/nov2622.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "遊歷",
       "志怪",
@@ -3209,6 +3554,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-03",
     "color": "#7b3f61",
+    "cover": "assets/covers/nov2621.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "復仇",
       "殺手",
@@ -3253,6 +3603,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-03",
     "color": "#4a6fa5",
+    "cover": "assets/covers/nov2620.webp",
+    "coverSize": [
+      300,
+      449
+    ],
     "tags": [
       "魔法",
       "科學史",
@@ -3297,6 +3652,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-03",
     "color": "#7b3f61",
+    "cover": "assets/covers/nov2619.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "輪迴",
       "武俠轉仙俠",
@@ -3341,6 +3701,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-03",
     "color": "#6a4c93",
+    "cover": "assets/covers/nov2618.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "詭異",
       "瘋狂",
@@ -3385,6 +3750,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-03",
     "color": "#2f5d8a",
+    "cover": "assets/covers/nov2617.webp",
+    "coverSize": [
+      300,
+      429
+    ],
     "tags": [
       "克蘇魯",
       "蒸汽龐克",
@@ -3429,6 +3799,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-02",
     "color": "#7a4e2d",
+    "cover": "assets/covers/nov2603.webp",
+    "coverSize": [
+      300,
+      461
+    ],
     "tags": [
       "台灣奇幻",
       "妖怪",
@@ -3480,6 +3855,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-02",
     "color": "#35524a",
+    "cover": "assets/covers/nov2604.webp",
+    "coverSize": [
+      300,
+      399
+    ],
     "tags": [
       "殺伐果斷",
       "化凡",
@@ -3530,6 +3910,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-02",
     "color": "#5b4b8a",
+    "cover": "assets/covers/nov2605.webp",
+    "coverSize": [
+      300,
+      454
+    ],
     "tags": [
       "虛擬世界",
       "武道",
@@ -3580,6 +3965,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-02",
     "color": "#9a3b3b",
+    "cover": "assets/covers/nov2606.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "升級換地圖",
       "宇宙",
@@ -3631,6 +4021,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-02",
     "color": "#2f5d8a",
+    "cover": "assets/covers/nov2607.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "搞笑",
       "補師",
@@ -3680,6 +4075,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-02",
     "color": "#6b705c",
+    "cover": "assets/covers/nov2608.webp",
+    "coverSize": [
+      300,
+      416
+    ],
     "tags": [
       "遺憾",
       "親情",
@@ -3727,6 +4127,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-02",
     "color": "#8a5a44",
+    "cover": "assets/covers/nov2609.webp",
+    "coverSize": [
+      300,
+      422
+    ],
     "tags": [
       "賽博龐克",
       "雙世界",
@@ -3777,6 +4182,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-02",
     "color": "#3a6351",
+    "cover": "assets/covers/nov2610.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "熱血",
       "升級",
@@ -3830,6 +4240,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-02",
     "color": "#4f518c",
+    "cover": "assets/covers/nov2611.webp",
+    "coverSize": [
+      300,
+      419
+    ],
     "tags": [
       "母女",
       "家庭",
@@ -3880,6 +4295,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-02",
     "color": "#a4572a",
+    "cover": "assets/covers/nov2612.webp",
+    "coverSize": [
+      300,
+      419
+    ],
     "tags": [
       "硬魔法",
       "伏筆",
@@ -3934,6 +4354,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-02",
     "color": "#2d6a6a",
+    "cover": "assets/covers/nov2613.webp",
+    "coverSize": [
+      300,
+      423
+    ],
     "tags": [
       "熱血",
       "命格",
@@ -3988,6 +4413,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-02",
     "color": "#7b3f61",
+    "cover": "assets/covers/nov2614.webp",
+    "coverSize": [
+      300,
+      420
+    ],
     "tags": [
       "命運",
       "因果",
@@ -4039,6 +4469,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-02",
     "color": "#51624f",
+    "cover": "assets/covers/nov2615.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "魔法學校",
       "成長",
@@ -4093,6 +4528,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-02",
     "color": "#866118",
+    "cover": "assets/covers/nov2616.webp",
+    "coverSize": [
+      300,
+      454
+    ],
     "tags": [
       "經典",
       "硬漢",
@@ -4143,6 +4583,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-02",
     "color": "#46538f",
+    "cover": "assets/covers/slf2602.webp",
+    "coverSize": [
+      300,
+      415
+    ],
     "tags": [
       "財富",
       "槓桿",
@@ -4194,6 +4639,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-10-02",
     "color": "#8c4a4a",
+    "cover": "assets/covers/soc2601.webp",
+    "coverSize": [
+      300,
+      393
+    ],
     "tags": [
       "人性",
       "翻案",
@@ -4245,6 +4695,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-10-02",
     "color": "#4a6fa5",
+    "cover": "assets/covers/nov2602.webp",
+    "coverSize": [
+      300,
+      407
+    ],
     "tags": [
       "紙本限定",
       "詭計",
@@ -4291,6 +4746,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-02",
     "color": "#c8553d",
+    "cover": "assets/covers/atomic-habits.webp",
+    "coverSize": [
+      300,
+      402
+    ],
     "tags": [
       "習慣",
       "系統",
@@ -4338,6 +4798,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-02",
     "color": "#3d5a80",
+    "cover": "assets/covers/thinking-fast-and-slow.webp",
+    "coverSize": [
+      300,
+      421
+    ],
     "tags": [
       "決策",
       "認知偏誤",
@@ -4386,6 +4851,11 @@ window.REVIEWS = [
     "rating": 5,
     "date": "2026-10-02",
     "color": "#2f6f6a",
+    "cover": "assets/covers/nov2601.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "輕鬆",
       "搞笑"
