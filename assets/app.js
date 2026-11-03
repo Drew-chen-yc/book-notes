@@ -6,6 +6,17 @@
   var page = document.documentElement.getAttribute('data-page-type');
 
   function $(s, root) { return (root || document).querySelector(s); }
+  /* 心得頁的圖書館借閱連結（data/reviews.js 的 LIBRARIES）：國資圖有館藏才出現，北市圖每本都放搜尋 */
+  function libLinks(r) {
+    var links = (window.LIBRARIES || []).map(function (l) {
+      var v = l.always ? r.title : (l.holdings || {})[r.id];
+      if (!v) return '';
+      return '<a class="btn btn-ghost" target="_blank" rel="noopener" data-lib="' + l.key + '" data-res="' + esc(l.name) + '" href="' + esc(l.url(r, v)) + '">到' + esc(l.name) + '借借看 ↗</a>';
+    }).join('');
+    if (!links) return '';
+    return '<p class="meta lib-note">也可以免費借電子書（要先有該館借閱證，熱門書可能要排隊；<a href="resources.html#library">怎麼辦證</a>）：</p><div class="buy-links lib-links">' + links + '</div>';
+  }
+
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -429,7 +440,7 @@
       '<section class="buy"><h2>想讀這本書？</h2><div class="buy-links">' +
       window.STORES.map(function (s) {
         return '<a class="btn" target="_blank" rel="noopener" data-store="' + s.key + '" href="' + s.url(r) + '">到' + s.name + '看看 ↗</a>';
-      }).join('') + '</div></section>' +
+      }).join('') + '</div>' + libLinks(r) + '</section>' +
       '<section class="related"><h2>同類型心得</h2><div id="related" class="rows"></div></section>' + inLists(r) + '</div>' + sideHtml(r, rel);
 
     track('view_review', base);
@@ -460,6 +471,13 @@
         var done = function () { b.innerHTML = '已複製 ' + ICO_CHECK; setTimeout(function () { b.textContent = '複製連結'; }, 1500); };
         if (navigator.clipboard) navigator.clipboard.writeText(decodeURIComponent(u)).then(done, done); else done();
       }
+    });
+
+    /* 圖書館免費電子書：和購書分開記，用閱讀資源頁同一個事件 click_resource */
+    main.addEventListener('click', function (e) {
+      var a = e.target.closest('a[data-lib]');
+      if (!a) return;
+      track('click_resource', { resource_name: a.dataset.res, resource_type: '圖書館電子書', link_url: a.href, review_id: r.id, book_title: r.title });
     });
 
     /* 購書點擊：高意圖，設為 GA4 關鍵事件，也是廣告轉換 */
