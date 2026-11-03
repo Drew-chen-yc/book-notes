@@ -5268,6 +5268,21 @@ window.STORES = [
   { key: 'readmoo', name: 'Readmoo 電子書', url: function (r) { return 'https://readmoo.com/search/keyword?q=' + encodeURIComponent(r.title); } }
 ];
 
+/* 圖書館免費電子書（2026-11-03）：心得頁「想讀這本書？」下面的借閱連結，點擊送 click_resource（resource_type = 圖書館電子書）。
+ * nlpi：國資圖電子書服務平台，2026-11-03 逐本查過館藏，只有 holdings 列出的書才顯示；值是書的頁碼（ebook.nlpi.edu.tw/book/<數字>）或搜尋關鍵字（系列書）。
+ * tpml：北市圖電子書（HyRead，含文化部擴大計次的書），網站有機器人驗證無法逐本確認，每本都放搜尋連結。
+ * 新增心得後若國資圖有館藏，在 nlpi.holdings 加一行即可。 */
+window.LIBRARIES = [
+  { key: 'nlpi', name: '國資圖電子書', holdings: {
+    'atomic-habits': 39183, 'psy2602': 33980, 'slf2603': 54962, 'soc2601': 50482,
+    'nov2613': '獵命師傳奇', 'nov2614': 20767, 'nov2616': '老人與海 海明威',
+    'nov2654': 10090, 'nov2655': 10087, 'nov2656': 11343, 'nov2657': 15517,
+    'nov2658': 12559, 'nov2660': 15518, 'nov2661': 12558, 'nov2662': 12557
+  }, url: function (r, v) { return typeof v === 'number' ? 'https://ebook.nlpi.edu.tw/book/' + v : 'https://ebook.nlpi.edu.tw/search?searchField=FullText&searchInput=' + encodeURIComponent(v); } },
+  { key: 'tpml', name: '北市圖電子書（HyRead）', always: true,
+    url: function (r) { return 'https://tpml.ebook.hyread.com.tw/searchList.jsp?search_field=FullText&search_input=' + encodeURIComponent(r.title); } }
+];
+
 /* 書單文：每篇會產生一個靜態頁 <id>.html（build/seo-build.js）。
  * sections 裡 heading 是小標、paras 是段落、items 是連回單本心得的項目（id = 心得的 id，note = 短評）
  */
