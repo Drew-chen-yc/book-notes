@@ -14,6 +14,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-11-02",
     "color": "#a4572a",
+    "cover": "assets/covers/nov2694.webp",
+    "coverSize": [
+      300,
+      413
+    ],
     "tags": [
       "療癒",
       "連作短篇",
@@ -65,6 +70,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-11-02",
     "color": "#51624f",
+    "cover": "assets/covers/nov2693.webp",
+    "coverSize": [
+      300,
+      390
+    ],
     "tags": [
       "社會派",
       "8050問題",
@@ -116,6 +126,11 @@ window.REVIEWS = [
     "rating": 4,
     "date": "2026-11-02",
     "color": "#7b3f61",
+    "cover": "assets/covers/nov2692.webp",
+    "coverSize": [
+      300,
+      400
+    ],
     "tags": [
       "山海經",
       "武俠",
@@ -163,6 +178,11 @@ window.REVIEWS = [
     "rating": 3.5,
     "date": "2026-11-02",
     "color": "#8a5a44",
+    "cover": "assets/covers/sci2601.webp",
+    "coverSize": [
+      300,
+      420
+    ],
     "tags": [
       "數學史",
       "笛卡兒",
