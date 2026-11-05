@@ -455,8 +455,8 @@
       '<article id="article">' + withInline(bodyHtml(r.body).join(''), r, rel) +
       '<p class="tags">' + r.tags.map(function (t) { return '<span>#' + esc(t) + '</span>'; }).join('') + '</p></article>' +
       seriesNav(r, function (id) { return REVIEWS.find(function (x) { return x.id === id; }); }) +
-      (sp ? '<section class="spoiler-cta" aria-labelledby="spoiler-h"><h2 id="spoiler-h">讀完了？看重雷心得</h2>' +
-        '<p>無雷心得只能講到這裡。結局、伏筆和我真正想聊的部分，寫在重雷心得：</p>' +
+      (sp ? '<section class="spoiler-cta" aria-labelledby="spoiler-h"><h2 id="spoiler-h">讀完了？看深度解析</h2>' +
+        '<p>無雷心得只能講到這裡。結局、伏筆和我真正想聊的部分，寫在深度解析（有劇透）：</p>' +
         '<p><a class="spoiler-link" href="' + esc(sp.file) + '" data-id="' + esc(r.id) + '" data-kind="spoiler" data-list="review_spoiler_cta" data-pos="1">' + esc(sp.title) + '</a></p>' +
         '<p class="meta">內含完整劇情與結局。' + (sp.progress ? '寫到' + esc(sp.progress) + '。' : '') + '</p></section>' : '') +
       '<section class="actions" aria-label="互動">' +
@@ -651,6 +651,15 @@
   if (page === 'spoiler') initSpoiler();
   if (page === 'news') initNewsList();
   if (page === 'list' || page === 'books' || page === 'category' || page === 'news' || page === 'news_article') bindCardClicks($('main'));
+  /* 購書書單（例如雙 11 書單）每本書下的博客來按鈕：送 click_buy_book，list_name 記是哪一份書單 */
+  if (page === 'list') $('main').addEventListener('click', function (e) {
+    var a = e.target.closest('a[data-buy-id]');
+    if (!a) return;
+    var r = REVIEWS.find(function (x) { return x.id === a.dataset.buyId; });
+    if (!r) return;
+    track('click_buy_book', Object.assign({}, reviewParams(r), { store: a.dataset.store, link_url: a.href, affiliate: a.dataset.ap ? 'ap' : 'none',
+      list_name: location.pathname.split('/').pop().replace(/\.html$/, '') }));
+  });
   if (page === 'home' && $('#home-news')) bindCardClicks($('#home-news'));
 
   /* 導覽列下拉選單與頁尾網站地圖：全站共用（只列有心得的分類）。

@@ -577,3 +577,7 @@ article h2[id] { scroll-margin-top: 16px; }
 .cat-pick em.cp-why { font-style: normal; font-size: 14px; line-height: 1.6; display: block; margin-top: 4px; }
 .cat-more { margin: 4px 0 0; }
 @media (max-width: 760px) { .cat-picks { grid-template-columns: 1fr; } }
+
+/* 購書書單（雙 11）每本書下的博客來按鈕 */
+.pick-buy { margin: 8px 0 2px !important; }
+.btn.btn-sm { padding: 6px 16px; font-size: 15px; min-height: 0; }

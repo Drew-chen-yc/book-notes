@@ -10,6 +10,8 @@ function buildSite(REVIEWS, opts) {
   /* Google AdSense 發布商 ID（2026-10-22 改為個人帳戶的 ID）：每一頁的 <head> 加驗證用 meta，根目錄產生 ads.txt。設成空字串就全部拿掉。
    * 廣告版位另外由 app.js 控制，這裡只負責網站驗證與 ads.txt。 */
   var ADSENSE_PUB = (opts && opts.adsensePub !== undefined) ? opts.adsensePub : 'ca-pub-3634341941601249';
+  /* Google 探索與搜尋結果可以顯示大張預覽圖（2026-11-06）：所有可索引的頁面都加；手寫頁已有 robots meta（例如 noindex）就不加 */
+  var DISCOVER_META = '  <meta name="robots" content="max-image-preview:large">';
   var ADS_META = ADSENSE_PUB ? '  <meta name="google-adsense-account" content="' + ADSENSE_PUB + '">' : '';
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -64,8 +66,8 @@ function buildSite(REVIEWS, opts) {
     SPOILERS[sp.id] = sp;
   });
   function spoilerFile(r) { return r.id + '-spoiler.html'; }
-  function spoilerH1(r) { return '《' + r.title + '》結局解析與重雷心得'; }
-  function spoilerTitle(r, sp) { return '《' + r.title + '》結局解析：' + sp.hook + '（重雷心得）｜折角 Dogeared'; }
+  function spoilerH1(r) { return '《' + r.title + '》深度解析'; }
+  function spoilerTitle(r, sp) { return '《' + r.title + '》深度解析：' + sp.hook + '｜折角 Dogeared'; }
   function spoilerDate(sp) { return sp.updated || sp.date; }
   function reviewMod(r) { var sp = SPOILERS[r.id]; return [r.updated || r.date].concat(sp ? [spoilerDate(sp)] : []).sort().pop(); }
   /* 分享縮圖：有書封就用書封（assets/covers/og/<id>.jpg，從書封 WebP 轉成 JPEG，社群平台都吃），沒有就用全站共用圖 */
@@ -79,8 +81,8 @@ function buildSite(REVIEWS, opts) {
   function spoilerCta(r) {
     var sp = SPOILERS[r.id];
     if (!sp) return '';
-    return '    <section class="spoiler-cta" aria-labelledby="spoiler-h"><h2 id="spoiler-h">讀完了？看重雷心得</h2>' +
-      '<p>無雷心得只能講到這裡。結局、伏筆和我真正想聊的部分，寫在重雷心得：</p>' +
+    return '    <section class="spoiler-cta" aria-labelledby="spoiler-h"><h2 id="spoiler-h">讀完了？看深度解析</h2>' +
+      '<p>無雷心得只能講到這裡。結局、伏筆和我真正想聊的部分，寫在深度解析（有劇透）：</p>' +
       '<p><a class="spoiler-link" href="' + spoilerFile(r) + '" data-id="' + esc(r.id) + '" data-kind="spoiler" data-list="review_spoiler_cta" data-pos="1">' + esc(spoilerH1(r)) + '</a></p>' +
       '<p class="meta">內含完整劇情與結局。' + (sp.progress ? '寫到' + esc(sp.progress) + '。' : '') + '</p></section>';
   }
@@ -162,7 +164,7 @@ function buildSite(REVIEWS, opts) {
   /* 導覽列下拉選單與頁尾網站地圖：直接寫進每一頁的 HTML，搜尋引擎不必執行程式就讀得到所有分類頁與書單的連結。
    * 內容與順序要和 assets/app.js 的 initSiteNav() 一致（那邊只在頁面沒有這兩塊時才動態補上）。
    * 分類順序依 data/reviews.js 的 CATEGORIES、SUBCATEGORIES（opts.categories、opts.subcategories），只列有心得的。 */
-  var APP_VER = '20261105b';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
+  var APP_VER = '20261106a';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
   function countOf(cat, sub) { return REVIEWS.filter(function (r) { return r.category === cat && (!sub || r.subcategory === sub); }).length; }
   function uniq(list) { return list.filter(function (x, i) { return x && list.indexOf(x) === i; }); }
   var LIVE_CATS = ((opts && opts.categories) || uniq(REVIEWS.map(function (r) { return r.category; })))
@@ -276,7 +278,7 @@ function buildSite(REVIEWS, opts) {
       '<html lang="zh-Hant-TW" data-page-type="' + o.type + '" data-content-group="' + o.group + '">',
       '<head>',
       '  <meta charset="utf-8">',
-      '  <meta name="viewport" content="width=device-width, initial-scale=1">' + (ADS_META ? '\n' + ADS_META : ''),
+      '  <meta name="viewport" content="width=device-width, initial-scale=1">\n' + DISCOVER_META + (ADS_META ? '\n' + ADS_META : ''),
       '  <title>' + esc(o.title) + '｜折角 Dogeared</title>',
       '  <meta name="description" content="' + esc(o.desc) + '">',
       '  <link rel="canonical" href="' + BASE + o.file + '">',
@@ -293,7 +295,7 @@ function buildSite(REVIEWS, opts) {
       '  <meta property="og:image" content="' + BASE + 'assets/og.png">',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261029c">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261106a">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -330,7 +332,7 @@ function buildSite(REVIEWS, opts) {
       '<html lang="zh-Hant-TW" data-page-type="review" data-content-group="心得內頁" data-review-id="' + esc(r.id) + '">',
       '<head>',
       '  <meta charset="utf-8">',
-      '  <meta name="viewport" content="width=device-width, initial-scale=1">' + (ADS_META ? '\n' + ADS_META : ''),
+      '  <meta name="viewport" content="width=device-width, initial-scale=1">\n' + DISCOVER_META + (ADS_META ? '\n' + ADS_META : ''),
       '  <title>' + esc(title) + '</title>',
       '  <meta name="description" content="' + esc(desc) + '">',
       '  <link rel="canonical" href="' + url + '">',
@@ -351,7 +353,7 @@ function buildSite(REVIEWS, opts) {
       ogImage(r),
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261029c">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261106a">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -397,15 +399,15 @@ function buildSite(REVIEWS, opts) {
     var others = REVIEWS.filter(function (x) { return x.id !== r.id && SPOILERS[x.id]; });
     others = others.filter(function (x) { return x.subcategory === r.subcategory; }).concat(others.filter(function (x) { return x.subcategory !== r.subcategory; })).slice(0, 4);
     var ld = { '@context': 'https://schema.org', '@type': 'Article', headline: h1, description: desc, url: url, mainEntityOfPage: url,
-      datePublished: sp.date, dateModified: spoilerDate(sp), inLanguage: 'zh-Hant-TW', image: BASE + 'assets/og.png', articleSection: '重雷心得',
+      datePublished: sp.date, dateModified: spoilerDate(sp), inLanguage: 'zh-Hant-TW', image: BASE + 'assets/og.png', articleSection: '深度解析',
       about: { '@type': 'Book', name: r.title, author: { '@type': 'Person', name: r.author } },
       author: { '@type': 'Organization', name: '折角 Dogeared', url: BASE }, publisher: { '@type': 'Organization', name: '折角 Dogeared', url: BASE } };
     files[file] = [
       '<!doctype html>',
-      '<html lang="zh-Hant-TW" data-page-type="spoiler" data-content-group="重雷心得" data-review-id="' + esc(r.id) + '">',
+      '<html lang="zh-Hant-TW" data-page-type="spoiler" data-content-group="深度解析" data-review-id="' + esc(r.id) + '">',
       '<head>',
       '  <meta charset="utf-8">',
-      '  <meta name="viewport" content="width=device-width, initial-scale=1">' + (ADS_META ? '\n' + ADS_META : ''),
+      '  <meta name="viewport" content="width=device-width, initial-scale=1">\n' + DISCOVER_META + (ADS_META ? '\n' + ADS_META : ''),
       '  <title>' + esc(title) + '</title>',
       '  <meta name="description" content="' + esc(desc) + '">',
       '  <link rel="canonical" href="' + url + '">',
@@ -426,7 +428,7 @@ function buildSite(REVIEWS, opts) {
       ogImage(r),
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261029c">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261106a">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -437,12 +439,12 @@ function buildSite(REVIEWS, opts) {
       '    ' + crumbOf(r).replace('</nav>', ' / <a href="' + esc(r.id) + '.html">《' + esc(r.title) + '》心得</a> / 結局解析</nav>'),
       '    <aside class="spoiler-warn" role="note"><span class="sw-icon" aria-hidden="true">!</span><div class="sw-body">',
       '      <p class="sw-title">重雷警告</p>',
-      '      <p class="sw-text">本篇心得為重雷心得，會透露劇情和結局走向，若想閱讀推薦心得，請點擊下方連結！</p>',
+      '      <p class="sw-text">本篇深度解析會透露劇情和結局走向，若想閱讀推薦心得，請點擊下方連結！</p>',
       '      <a class="sw-btn" href="' + esc(r.id) + '.html" data-id="' + esc(r.id) + '" data-list="spoiler_warn" data-pos="1">閱讀無雷推薦心得<span aria-hidden="true"> →</span></a>',
       '    </div></aside>',
       '    <header class="review-head">',
       '      ' + cover(r, 'lg'),
-      '      <div><span class="tag tag-spoiler">重雷心得</span><h1>' + esc(h1) + '</h1>',
+      '      <div><span class="tag tag-spoiler">深度解析</span><h1>' + esc(h1) + '</h1>',
       '      <p class="meta">' + esc(r.author) + '</p><p class="rating">' + seal(r.rating, 'lg') + '<span class="stars big" aria-hidden="true">' + stars(r.rating) + '</span></p>',
       '      <p class="meta">' + sp.date + (sp.updated && sp.updated !== sp.date ? '・更新 ' + sp.updated : '') + ' · 約 ' + mins + ' 分鐘閱讀</p>',
       '      <p class="lead">' + esc(sp.summary) + '</p></div>',
@@ -483,6 +485,16 @@ function buildSite(REVIEWS, opts) {
     ].join('\n')
   });
 
+  /* 購書書單（書單設 buy: true，例如雙 11 書單）：每本書下面放博客來按鈕。有博客來編號的連推廣連結（opts.ap = { id: AP_ID, pid: BOOKS_PID }），
+   * 沒有編號的連搜尋頁。點擊由 app.js 送 click_buy_book（list_name = 書單 id）。網址格式與 data/reviews.js 的 STORES 相同，兩邊要同步。 */
+  var AP = (opts && opts.ap) || { id: '', pid: {} };
+  function listBuy(r) {
+    var pid = AP.id && AP.pid[r.id];
+    var href = pid ? 'https://www.books.com.tw/exep/assp.php/' + AP.id + '/products/' + pid + '?utm_source=' + AP.id + '&utm_medium=ap-books&utm_content=recommend&utm_campaign=ap-202611'
+      : 'https://search.books.com.tw/search/query/key/' + encodeURIComponent(r.title);
+    return '<p class="pick-buy"><a class="btn btn-sm" target="_blank" rel="' + (pid ? 'sponsored nofollow noopener' : 'nofollow noopener') + '" data-store="books_com_tw"' + (pid ? ' data-ap="1"' : '') +
+      ' data-buy-id="' + esc(r.id) + '" href="' + esc(href) + '">到博客來看看 ↗</a></p>';
+  }
   /* 書單文：每篇一個靜態頁，項目連回單本心得 */
   LISTS.forEach(function (l) {
     var pos = 0;
@@ -511,7 +523,7 @@ function buildSite(REVIEWS, opts) {
             pos += 1;
             return '    <div class="pick"><h3><a href="' + esc(r.id) + '.html" data-id="' + esc(r.id) + '" data-list="list_' + esc(l.id) + '" data-pos="' + pos + '">《' + esc(r.title) + '》</a> ' +
               seal(r.rating, 'xs') + '</h3>' +
-              '<p class="meta">' + esc(r.author) + ' · ' + esc(catLabel(r)) + '</p><p>' + esc(it.note) + '</p></div>';
+              '<p class="meta">' + esc(r.author) + ' · ' + esc(catLabel(r)) + '</p><p>' + esc(it.note) + '</p>' + (l.buy ? listBuy(r) : '') + '</div>';
           })).join('\n');
         }).join('\n'),
         (l.outro || []).map(para).join('\n'),
@@ -704,6 +716,8 @@ function buildSite(REVIEWS, opts) {
       need(/^[ \t]*<meta name="viewport"[^>]*>$/m.test(s), name, ' <meta name="viewport">');
       s = s.replace(/^([ \t]*<meta name="viewport"[^>]*>)$/m, function (m) { return m + '\n' + ADS_META; });
     }
+    s = s.replace(/[ \t]*<meta name="robots" content="max-image-preview:large">\n?/g, '');
+    if (!/<meta name="robots"/.test(s)) s = s.replace(/^([ \t]*<meta name="viewport"[^>]*>)$/m, function (m) { return m + '\n' + DISCOVER_META; });
     if (name === 'index.html') {
       s = s.replace(/(data-count="([^"]+)">)[^<]*/g, function (m, head, key) {
         return head + (key === 'reviews' ? REVIEWS.length : key === 'lists' ? LISTS.length :
