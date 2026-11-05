@@ -439,7 +439,8 @@
       '<button type="button" class="btn btn-ghost" data-share="copy_link">複製連結</button></section>' +
       '<section class="buy"><h2>想讀這本書？</h2><div class="buy-links">' +
       window.STORES.map(function (s) {
-        return '<a class="btn" target="_blank" rel="noopener" data-store="' + s.key + '" href="' + s.url(r) + '">到' + s.name + '看看 ↗</a>';
+        var ap = s.ap && s.ap(r);
+        return '<a class="btn" target="_blank" rel="' + (ap ? 'sponsored nofollow noopener' : 'nofollow noopener') + '" data-store="' + s.key + '"' + (ap ? ' data-ap="1"' : '') + ' href="' + s.url(r) + '">到' + s.name + '看看 ↗</a>';
       }).join('') + '</div>' + libLinks(r) + '</section>' +
       '<section class="related"><h2>同類型心得</h2><div id="related" class="rows"></div></section>' + inLists(r) + '</div>' + sideHtml(r, rel);
 
@@ -484,7 +485,7 @@
     main.addEventListener('click', function (e) {
       var a = e.target.closest('a[data-store]');
       if (!a) return;
-      track('click_buy_book', Object.assign({}, base, { store: a.dataset.store, link_url: a.href }));
+      track('click_buy_book', Object.assign({}, base, { store: a.dataset.store, link_url: a.href, affiliate: a.dataset.ap ? 'ap' : 'none' }));
     });
 
     if (sp) bindCardClicks(main.querySelector('.spoiler-cta'));

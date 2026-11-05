@@ -5283,10 +5283,39 @@ window.CATEGORIES = ['自我成長', '心理學', '人文社科', '歷史', '投
 /* 子分類：只有列在這裡的分類才有子分類（心得資料用 subcategory 欄位） */
 window.SUBCATEGORIES = { '小說': ['仙俠', '玄幻', '奇幻', '科幻', '推理', '懸疑', '文學', '歷史', '愛情', '翻譯', '其他'] };
 
-/* 外部購書通路（click_buy_book 事件的 store 參數） */
+/* 外部購書通路（click_buy_book 事件的 store 參數）
+ * 2026-11-05：加入博客來 AP 策略聯盟（獨家方案），只放博客來，不放其他書店的購書連結（獨家條款）。
+ * BOOKS_PID：心得 id → 博客來商品編號（books.com.tw/products/<編號>），有編號的書連到推廣連結（有回饋）；
+ * 沒有編號（博客來沒賣或還沒查到）的書連到博客來搜尋頁（沒有回饋）。新增心得時在 BOOKS_PID 加一行即可。 */
+window.AP_ID = 'd51uoemg12qw5';
+window.BOOKS_PID = {
+  'nov2694': '0011049501', 'nov2693': '0011065838', 'nov2691': '0011037830', 'sci2601': '0010451629',
+  'slf2604': '0011063791', 'slf2603': '0010971379', 'psy2602': '0010653153', 'nov2688': '0010317195',
+  'nov2685': '0010972748', 'nov2684': '0011022034', 'nov2681': '0010992200', 'nov2677': '0010979679',
+  'nov2676': 'CN11998888', 'nov2675': '0010365684', 'nov2674': '0011062623', 'nov2673': '0011031393',
+  'nov2672': '0010368958', 'nov2671': 'E050037844', 'nov2670': 'E050037742', 'nov2669': '0010911379',
+  'nov2668': 'E050025565', 'nov2667': '0010816765', 'nov2666': '0010742171', 'nov2665': '0010662270',
+  'nov2664': '0010574838', 'nov2663': '0010497455', 'nov2662': '0010964513', 'nov2661': '0010390450',
+  'nov2660': '0010348111', 'nov2659': '0010311867', 'nov2658': '0010291823', 'nov2657': '0010336891',
+  'nov2656': '0010913107', 'nov2654': '0010954376', 'nov2653': '0011048193', 'nov2652': '0011048212',
+  'nov2651': '0010974382', 'nov2650': '0010974381', 'nov2649': '0010974667', 'nov2648': '0010974379',
+  'nov2646': '0010775259', 'nov2645': 'CN17841870', 'nov2644': 'CN11497907', 'nov2643': 'CN11979034',
+  'nov2642': 'CN11731752', 'nov2640': '0011055188', 'nov2636': '0010829904', 'nov2635': 'CN11816833',
+  'nov2634': '0010999687', 'nov2632': '0010678950', 'nov2629': '0010767163', 'nov2627': '0010873494',
+  'nov2626': 'CN11750027', 'nov2620': '0010635913', 'nov2619': 'CN11402778', 'nov2617': '0010876694',
+  'nov2603': 'E050030188', 'nov2604': 'CN11363825', 'nov2605': 'CN11907200', 'nov2606': 'CN11782310',
+  'nov2608': '0010487623', 'nov2609': 'CN11860743', 'nov2611': '0011042972', 'nov2612': '0010476298',
+  'nov2613': '0010284112', 'nov2614': '0010959982', 'nov2615': '0010863501', 'nov2616': '0011037351',
+  'slf2602': '0011012422', 'soc2601': '0010900281', 'nov2602': '0011055461', 'atomic-habits': '0010822522',
+  'thinking-fast-and-slow': '0010962486'
+};
 window.STORES = [
-  { key: 'books_com_tw', name: '博客來', url: function (r) { return 'https://search.books.com.tw/search/query/key/' + encodeURIComponent(r.title); } },
-  { key: 'readmoo', name: 'Readmoo 電子書', url: function (r) { return 'https://readmoo.com/search/keyword?q=' + encodeURIComponent(r.title); } }
+  { key: 'books_com_tw', name: '博客來', url: function (r) {
+      var pid = window.BOOKS_PID[r.id];
+      if (pid) return 'https://www.books.com.tw/exep/assp.php/' + window.AP_ID + '/products/' + pid +
+        '?utm_source=' + window.AP_ID + '&utm_medium=ap-books&utm_content=recommend&utm_campaign=ap-202611';
+      return 'https://search.books.com.tw/search/query/key/' + encodeURIComponent(r.title);
+    }, ap: function (r) { return !!window.BOOKS_PID[r.id]; } }
 ];
 
 /* 圖書館免費電子書（2026-11-03）：心得頁「想讀這本書？」下面的借閱連結，點擊送 click_resource（resource_type = 圖書館電子書）。
