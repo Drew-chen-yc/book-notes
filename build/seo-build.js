@@ -164,7 +164,7 @@ function buildSite(REVIEWS, opts) {
   /* 導覽列下拉選單與頁尾網站地圖：直接寫進每一頁的 HTML，搜尋引擎不必執行程式就讀得到所有分類頁與書單的連結。
    * 內容與順序要和 assets/app.js 的 initSiteNav() 一致（那邊只在頁面沒有這兩塊時才動態補上）。
    * 分類順序依 data/reviews.js 的 CATEGORIES、SUBCATEGORIES（opts.categories、opts.subcategories），只列有心得的。 */
-  var APP_VER = '20261106a';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
+  var APP_VER = '20261106b';   // assets/app.js 的快取版本參數：改 app.js 時只要換這裡，build 會寫進每一頁
   function countOf(cat, sub) { return REVIEWS.filter(function (r) { return r.category === cat && (!sub || r.subcategory === sub); }).length; }
   function uniq(list) { return list.filter(function (x, i) { return x && list.indexOf(x) === i; }); }
   var LIVE_CATS = ((opts && opts.categories) || uniq(REVIEWS.map(function (r) { return r.category; })))
@@ -295,7 +295,7 @@ function buildSite(REVIEWS, opts) {
       '  <meta property="og:image" content="' + BASE + 'assets/og.png">',
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261106a">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261106b">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -353,7 +353,7 @@ function buildSite(REVIEWS, opts) {
       ogImage(r),
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261106a">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261106b">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -428,7 +428,7 @@ function buildSite(REVIEWS, opts) {
       ogImage(r),
       '  <link rel="preconnect" href="https://fonts.googleapis.com">',
       '  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">',
-      '  <link rel="stylesheet" href="assets/style.css?v=20261106a">',
+      '  <link rel="stylesheet" href="assets/style.css?v=20261106b">',
       '</head>',
       '<body>',
       '  <header class="site-header"><div class="wrap">',
@@ -495,6 +495,11 @@ function buildSite(REVIEWS, opts) {
     return '<p class="pick-buy"><a class="btn btn-sm" target="_blank" rel="' + (pid ? 'sponsored nofollow noopener' : 'nofollow noopener') + '" data-store="books_com_tw"' + (pid ? ' data-ap="1"' : '') +
       ' data-buy-id="' + esc(r.id) + '" href="' + esc(href) + '">到博客來看看 ↗</a></p>';
   }
+  /* 還沒寫心得的書（書單項目沒有 id、有 pid = 博客來編號）：直接連推廣連結，點擊由 app.js 送 click_buy_book（沒有 review_id，帶 book_title 與 product_id） */
+  function listBuyPid(pid, title) {
+    var href = 'https://www.books.com.tw/exep/assp.php/' + AP.id + '/products/' + pid + '?utm_source=' + AP.id + '&utm_medium=ap-books&utm_content=recommend&utm_campaign=ap-202611';
+    return '<p class="pick-buy"><a class="btn btn-sm" target="_blank" rel="sponsored nofollow noopener" data-store="books_com_tw" data-ap="1" data-buy-pid="' + esc(pid) + '" data-buy-title="' + esc(title) + '" href="' + esc(href) + '">到博客來看看 ↗</a></p>';
+  }
   /* 書單文：每篇一個靜態頁，項目連回單本心得 */
   LISTS.forEach(function (l) {
     var pos = 0;
@@ -516,7 +521,8 @@ function buildSite(REVIEWS, opts) {
           return (s.heading ? ['    <h2>' + esc(s.heading) + '</h2>'] : []).concat((s.paras || []).map(para), (s.items || []).map(function (it) {
             if (!it.id) {   // 還沒寫心得的書（title、author、rating 可省略、note）：不連結，有評分才顯示印章
               return '    <div class="pick pick-plain"><h3>《' + esc(it.title) + '》' + (it.rating ? ' ' + seal(it.rating, 'xs') : '') + '</h3>' +
-                '<p class="meta">' + esc(it.author || '') + (it.tag ? ' · ' + esc(it.tag) : '') + '</p><p>' + esc(it.note) + '</p></div>';
+                '<p class="meta">' + esc(it.author || '') + (it.tag ? ' · ' + esc(it.tag) : '') + '</p>' + (it.deal ? '<p class="pick-deal">' + esc(it.deal) + '</p>' : '') +
+                '<p>' + esc(it.note) + '</p>' + (l.buy && it.pid ? listBuyPid(it.pid, it.title) : '') + '</div>';
             }
             var r = byId(it.id);
             if (!r) throw new Error('書單 ' + l.id + ' 找不到心得 ' + it.id);

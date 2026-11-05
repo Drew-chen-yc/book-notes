@@ -653,11 +653,12 @@
   if (page === 'list' || page === 'books' || page === 'category' || page === 'news' || page === 'news_article') bindCardClicks($('main'));
   /* 購書書單（例如雙 11 書單）每本書下的博客來按鈕：送 click_buy_book，list_name 記是哪一份書單 */
   if (page === 'list') $('main').addEventListener('click', function (e) {
-    var a = e.target.closest('a[data-buy-id]');
+    var a = e.target.closest('a[data-buy-id], a[data-buy-pid]');
     if (!a) return;
-    var r = REVIEWS.find(function (x) { return x.id === a.dataset.buyId; });
-    if (!r) return;
-    track('click_buy_book', Object.assign({}, reviewParams(r), { store: a.dataset.store, link_url: a.href, affiliate: a.dataset.ap ? 'ap' : 'none',
+    var r = a.dataset.buyId && REVIEWS.find(function (x) { return x.id === a.dataset.buyId; });
+    /* 還沒寫心得的書（例如雙 11 新書特價書單）：沒有 review_id，只送書名與博客來編號 */
+    var base = r ? reviewParams(r) : { book_title: a.dataset.buyTitle || '', product_id: a.dataset.buyPid || '' };
+    track('click_buy_book', Object.assign({}, base, { store: a.dataset.store, link_url: a.href, affiliate: a.dataset.ap ? 'ap' : 'none',
       list_name: location.pathname.split('/').pop().replace(/\.html$/, '') }));
   });
   if (page === 'home' && $('#home-news')) bindCardClicks($('#home-news'));

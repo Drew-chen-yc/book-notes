@@ -581,3 +581,4 @@ article h2[id] { scroll-margin-top: 16px; }
 /* 購書書單（雙 11）每本書下的博客來按鈕 */
 .pick-buy { margin: 8px 0 2px !important; }
 .btn.btn-sm { padding: 6px 16px; font-size: 15px; min-height: 0; }
+.pick-deal { margin: 2px 0 !important; color: var(--danger); font-weight: 700; font-size: 15px; }
