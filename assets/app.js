@@ -17,6 +17,29 @@
     return '<p class="meta lib-note">也可以免費借電子書（要先有該館借閱證，熱門書可能要排隊；<a href="resources.html#library">怎麼辦證</a>）：</p><div class="buy-links lib-links">' + links + '</div>';
   }
 
+  /* 「想讀這本書？」區塊：無雷心得頁與重雷心得頁共用（購書按鈕 + 圖書館借閱） */
+  function buyHtml(r) {
+    return '<section class="buy"><h2>想讀這本書？</h2><div class="buy-links">' +
+      window.STORES.map(function (s) {
+        var ap = s.ap && s.ap(r);
+        return '<a class="btn" target="_blank" rel="' + (ap ? 'sponsored nofollow noopener' : 'nofollow noopener') + '" data-store="' + s.key + '"' + (ap ? ' data-ap="1"' : '') + ' href="' + s.url(r) + '">到' + s.name + '看看 ↗</a>';
+      }).join('') + '</div>' + libLinks(r) + '</section>';
+  }
+  function bindBuy(root, r, base) {
+    /* 圖書館免費電子書：和購書分開記，用閱讀資源頁同一個事件 click_resource */
+    root.addEventListener('click', function (e) {
+      var a = e.target.closest('a[data-lib]');
+      if (!a) return;
+      track('click_resource', { resource_name: a.dataset.res, resource_type: '圖書館電子書', link_url: a.href, review_id: r.id, book_title: r.title });
+    });
+    /* 購書點擊：高意圖，設為 GA4 關鍵事件，也是廣告轉換 */
+    root.addEventListener('click', function (e) {
+      var a = e.target.closest('a[data-store]');
+      if (!a) return;
+      track('click_buy_book', Object.assign({}, base, { store: a.dataset.store, link_url: a.href, affiliate: a.dataset.ap ? 'ap' : 'none' }));
+    });
+  }
+
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -368,8 +391,13 @@
     var id = document.documentElement.getAttribute('data-review-id');
     var r = REVIEWS.find(function (x) { return x.id === id; });
     if (!r) return;
-    track('view_review', reviewParams(r));
+    var base = reviewParams(r);
+    track('view_review', base);
     window.BN.trackReading($('#article'), { review_id: r.id, book_category: r.category }, { minSeconds: 60 });
+    /* 購書區塊放在文章後、「繼續看」前（重雷心得頁是靜態 HTML，這塊由這裡補上） */
+    var art = $('#article');
+    if (art && !$('#spoiler .buy')) art.insertAdjacentHTML('afterend', buyHtml(r));
+    bindBuy($('main'), r, base);
     bindCardClicks($('main'));
     readProgress($('#article'));
   }
@@ -437,11 +465,7 @@
       '<button type="button" class="btn btn-ghost" data-share="line">LINE</button>' +
       '<button type="button" class="btn btn-ghost" data-share="facebook">Facebook</button>' +
       '<button type="button" class="btn btn-ghost" data-share="copy_link">複製連結</button></section>' +
-      '<section class="buy"><h2>想讀這本書？</h2><div class="buy-links">' +
-      window.STORES.map(function (s) {
-        var ap = s.ap && s.ap(r);
-        return '<a class="btn" target="_blank" rel="' + (ap ? 'sponsored nofollow noopener' : 'nofollow noopener') + '" data-store="' + s.key + '"' + (ap ? ' data-ap="1"' : '') + ' href="' + s.url(r) + '">到' + s.name + '看看 ↗</a>';
-      }).join('') + '</div>' + libLinks(r) + '</section>' +
+      buyHtml(r) +
       '<section class="related"><h2>同類型心得</h2><div id="related" class="rows"></div></section>' + inLists(r) + '</div>' + sideHtml(r, rel);
 
     track('view_review', base);
@@ -474,19 +498,7 @@
       }
     });
 
-    /* 圖書館免費電子書：和購書分開記，用閱讀資源頁同一個事件 click_resource */
-    main.addEventListener('click', function (e) {
-      var a = e.target.closest('a[data-lib]');
-      if (!a) return;
-      track('click_resource', { resource_name: a.dataset.res, resource_type: '圖書館電子書', link_url: a.href, review_id: r.id, book_title: r.title });
-    });
-
-    /* 購書點擊：高意圖，設為 GA4 關鍵事件，也是廣告轉換 */
-    main.addEventListener('click', function (e) {
-      var a = e.target.closest('a[data-store]');
-      if (!a) return;
-      track('click_buy_book', Object.assign({}, base, { store: a.dataset.store, link_url: a.href, affiliate: a.dataset.ap ? 'ap' : 'none' }));
-    });
+    bindBuy(main, r, base);
 
     if (sp) bindCardClicks(main.querySelector('.spoiler-cta'));
     if (main.querySelector('.series-nav')) bindCardClicks(main.querySelector('.series-nav'));
