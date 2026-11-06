@@ -5311,13 +5311,31 @@ window.BOOKS_PID = {
   'nov2633': 'CN10883740', 'nov2637': 'CN10509430', 'nov2638': 'CN11086537', 'nov2639': 'CN11788168',
   'nov2641': 'CN11150209', 'nov2610': 'CN11818630', 'nov2655': '0010833400'
 };
+/* BOOKS_EPID：心得 id → 博客來電子書商品編號（E05 開頭），系列書連第一集。新增心得時有電子書就加一行。 */
+window.BOOKS_EPID = {
+  'nov2694': 'E050328127', 'nov2693': 'E050362094', 'slf2604': 'E050357543', 'slf2603': 'E050184781',
+  'psy2602': 'E050011416', 'nov2691': 'E050302583', 'nov2688': 'E050087249', 'nov2677': 'E050200246',
+  'nov2674': 'E050044564', 'nov2671': 'E050037844', 'nov2670': 'E050037742', 'nov2668': 'E050025565',
+  'nov2603': 'E050030188', 'nov2655': 'E050030058', 'nov2654': 'E050158106', 'nov2653': 'E050328517',
+  'nov2652': 'E050192917', 'nov2651': 'E050192916', 'nov2650': 'E050192809', 'nov2649': 'E050192808',
+  'nov2648': 'E050192807', 'nov2640': 'E050349797', 'nov2608': 'E050024419', 'nov2611': 'E050313342',
+  'nov2612': 'E050017092', 'nov2613': 'E050030248', 'nov2615': 'E050287626', 'nov2616': 'E050244562',
+  'slf2602': 'E050196158', 'soc2601': 'E050106202', 'atomic-habits': 'E050045330', 'thinking-fast-and-slow': 'E050008087'
+};
 window.STORES = [
   { key: 'books_com_tw', name: '博客來', url: function (r) {
       var pid = window.BOOKS_PID[r.id];
       if (pid) return 'https://www.books.com.tw/exep/assp.php/' + window.AP_ID + '/products/' + pid +
         '?utm_source=' + window.AP_ID + '&utm_medium=ap-books&utm_content=recommend&utm_campaign=ap-202611';
       return 'https://search.books.com.tw/search/query/key/' + encodeURIComponent(r.title);
-    }, ap: function (r) { return !!window.BOOKS_PID[r.id]; } }
+    }, ap: function (r) { return !!window.BOOKS_PID[r.id]; } },
+  /* 博客來電子書（2026-11-06）：有電子書編號、而且和上面那顆不是同一個商品時才顯示 */
+  { key: 'books_com_tw_ebook', name: '博客來電子書', show: function (r) {
+      var e = window.BOOKS_EPID[r.id]; return !!e && e !== window.BOOKS_PID[r.id];
+    }, url: function (r) {
+      return 'https://www.books.com.tw/exep/assp.php/' + window.AP_ID + '/products/' + window.BOOKS_EPID[r.id] +
+        '?utm_source=' + window.AP_ID + '&utm_medium=ap-books&utm_content=recommend&utm_campaign=ap-202611';
+    }, ap: function () { return true; } }
 ];
 
 /* 圖書館免費電子書（2026-11-03）：心得頁「想讀這本書？」下面的借閱連結，點擊送 click_resource（resource_type = 圖書館電子書）。

@@ -20,7 +20,7 @@
   /* 「想讀這本書？」區塊：無雷心得頁與重雷心得頁共用（購書按鈕 + 圖書館借閱） */
   function buyHtml(r) {
     return '<section class="buy"><h2>想讀這本書？</h2><div class="buy-links">' +
-      window.STORES.map(function (s) {
+      window.STORES.filter(function (s) { return !s.show || s.show(r); }).map(function (s) {
         var ap = s.ap && s.ap(r);
         return '<a class="btn" target="_blank" rel="' + (ap ? 'sponsored nofollow noopener' : 'nofollow noopener') + '" data-store="' + s.key + '"' + (ap ? ' data-ap="1"' : '') + ' href="' + s.url(r) + '">到' + s.name + '看看 ↗</a>';
       }).join('') + '</div>' + libLinks(r) + '</section>';
