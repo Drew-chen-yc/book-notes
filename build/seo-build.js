@@ -226,7 +226,7 @@ function buildSite(REVIEWS, opts) {
   var FOOT = [
     '  <footer class="site-footer"><div class="wrap">',
     '    ' + SITEMAP,
-    '    <p class="copyright">© 2026 折角 Dogeared · <a href="about.html#privacy">隱私說明</a></p>',
+    '    <p class="copyright">© 2026 折角 Dogeared · <a href="about.html#privacy">隱私說明</a> · <a href="about.html#contact">聯絡</a> · <a href="https://www.threads.com/@dogeared2026" target="_blank" rel="noopener" style="white-space:nowrap">Threads @dogeared2026</a></p>',
     '  </div></footer>',
     '  <script src="data/reviews.js"></script>',
     '  <script src="assets/app.js?v=' + APP_VER + '"></script>',
