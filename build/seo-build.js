@@ -312,7 +312,7 @@ function buildSite(REVIEWS, opts) {
   var files = {};
   REVIEWS.forEach(function (r) {
     var url = BASE + r.id + '.html';
-    var title = seoTitle(r), intro = seoIntro(r), desc = clip(intro + r.summary), rel = relatedOf(r, REVIEWS, 4);
+    var title = seoTitle(r), intro = seoIntro(r), desc = clip(r.seoDesc || (intro + r.summary))   /* seoDesc：只換 meta description，頁面內容不變 */, rel = relatedOf(r, REVIEWS, 4);
     var ld = {
       '@context': 'https://schema.org',
       '@type': 'Review',
