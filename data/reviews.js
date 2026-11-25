@@ -14,6 +14,11 @@ window.REVIEWS = [
     "rating": 4.5,
     "date": "2026-11-21",
     "color": "#7b3f61",
+    "cover": "assets/covers/nov2698.webp",
+    "coverSize": [
+      300,
+      447
+    ],
     "tags": [
       "大學",
       "室友",
