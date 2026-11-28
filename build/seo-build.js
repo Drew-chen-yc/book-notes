@@ -86,6 +86,11 @@ function buildSite(REVIEWS, opts) {
       '<p><a class="spoiler-link" href="' + spoilerFile(r) + '" data-id="' + esc(r.id) + '" data-kind="spoiler" data-list="review_spoiler_cta" data-pos="1">' + esc(spoilerH1(r)) + '</a></p>' +
       '<p class="meta">內含完整劇情與結局。' + (sp.progress ? '寫到' + esc(sp.progress) + '。' : '') + '</p></section>';
   }
+  /* 「標籤：https://…」一整段只有一個網址時，轉成以標籤為文字的外連（2026-11-28，EXM2601 的官方連結段）。seo-build.js 與 app.js 各一份 */
+  function paraHtml(p) {
+    var u = /^(.+?)：(https?:\/\/\S+)$/.exec(p);
+    return u ? '<p><a href="' + esc(u[2]) + '" target="_blank" rel="noopener">' + esc(u[1]) + '</a></p>' : '<p>' + esc(p) + '</p>';
+  }
   function bodyHtml(body) {   // 「## 」小標題（帶 id="s-N" 給目錄跳轉）、「### 」次標題、連續的「- 」條列
     var out = [], li = [], h2 = 0;
     function flush() { if (li.length) { out.push('<ul>' + li.join('') + '</ul>'); li = []; } }
@@ -93,7 +98,7 @@ function buildSite(REVIEWS, opts) {
       if (p.indexOf('- ') === 0) { li.push('<li>' + esc(p.slice(2)) + '</li>'); return; }
       flush();
       var m = /^(#{2,3})\s+(.+)$/.exec(p);
-      out.push(m ? '<h' + m[1].length + (m[1].length === 2 ? ' id="s-' + (++h2) + '"' : '') + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '<p>' + esc(p) + '</p>');
+      out.push(m ? '<h' + m[1].length + (m[1].length === 2 ? ' id="s-' + (++h2) + '"' : '') + '>' + esc(m[2]) + '</h' + m[1].length + '>' : paraHtml(p));
     });
     flush();
     return out;
@@ -158,7 +163,7 @@ function buildSite(REVIEWS, opts) {
   var LIST_TYPES = ['分類推薦', '主題書單', '比較', '作者與系列', '入門與指南', '年度回顧'];
   function listDate(l) { return l.updated || l.date; }
   var LISTS_NEW = LISTS.slice().sort(function (a, b) { return listDate(a) < listDate(b) ? 1 : listDate(a) > listDate(b) ? -1 : 0; });   // 新的在前
-  var CAT_SLUG = { '小說': 'novel', '自我成長': 'self-growth', '心理學': 'psychology', '人文社科': 'humanities', '歷史': 'history', '投資理財': 'investing' };
+  var CAT_SLUG = { '小說': 'novel', '自我成長': 'self-growth', '心理學': 'psychology', '人文社科': 'humanities', '歷史': 'history', '投資理財': 'investing', '考試證照': 'exam' };
   var SUB_SLUG = { '仙俠': 'xianxia', '玄幻': 'xuanhuan', '奇幻': 'fantasy', '科幻': 'scifi', '推理': 'mystery', '懸疑': 'suspense', '文學': 'literary', '歷史': 'historical', '愛情': 'romance', '翻譯': 'translated', '其他': 'other' };
   function catHref(cat, sub) { return 'cat-' + CAT_SLUG[cat] + (sub ? '-' + SUB_SLUG[sub] : '') + '.html'; }
   /* 導覽列下拉選單與頁尾網站地圖：直接寫進每一頁的 HTML，搜尋引擎不必執行程式就讀得到所有分類頁與書單的連結。

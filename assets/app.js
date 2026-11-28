@@ -46,6 +46,11 @@
     });
   }
   /* 內文段落：「## 」開頭是小標題、「### 」是次標題、連續的「- 」是條列，其餘是一般段落 */
+  /* 「標籤：https://…」一整段只有一個網址時，轉成以標籤為文字的外連（2026-11-28，EXM2601 的官方連結段）。seo-build.js 與 app.js 各一份 */
+  function paraHtml(p) {
+    var u = /^(.+?)：(https?:\/\/\S+)$/.exec(p);
+    return u ? '<p><a href="' + esc(u[2]) + '" target="_blank" rel="noopener">' + esc(u[1]) + '</a></p>' : '<p>' + esc(p) + '</p>';
+  }
   function bodyHtml(body) {   // ## 小標題帶 id="s-N"，給目錄跳轉
     var out = [], li = [], h2 = 0;
     function flush() { if (li.length) { out.push('<ul>' + li.join('') + '</ul>'); li = []; } }
@@ -53,7 +58,7 @@
       if (p.indexOf('- ') === 0) { li.push('<li>' + esc(p.slice(2)) + '</li>'); return; }
       flush();
       var m = /^(#{2,3})\s+(.+)$/.exec(p);
-      out.push(m ? '<h' + m[1].length + (m[1].length === 2 ? ' id="s-' + (++h2) + '"' : '') + '>' + esc(m[2]) + '</h' + m[1].length + '>' : '<p>' + esc(p) + '</p>');
+      out.push(m ? '<h' + m[1].length + (m[1].length === 2 ? ' id="s-' + (++h2) + '"' : '') + '>' + esc(m[2]) + '</h' + m[1].length + '>' : paraHtml(p));
     });
     flush();
     return out;
@@ -143,7 +148,7 @@
     return p;
   }
   /* 分類頁網址：cat-<分類>.html、cat-<分類>-<子分類>.html（build/seo-build.js 與 assets/app.js 各有一份，要同步） */
-  var CAT_SLUG = { '小說': 'novel', '自我成長': 'self-growth', '心理學': 'psychology', '人文社科': 'humanities', '歷史': 'history', '投資理財': 'investing' };
+  var CAT_SLUG = { '小說': 'novel', '自我成長': 'self-growth', '心理學': 'psychology', '人文社科': 'humanities', '歷史': 'history', '投資理財': 'investing', '考試證照': 'exam' };
   var SUB_SLUG = { '仙俠': 'xianxia', '玄幻': 'xuanhuan', '奇幻': 'fantasy', '科幻': 'scifi', '推理': 'mystery', '懸疑': 'suspense', '文學': 'literary', '歷史': 'historical', '愛情': 'romance', '翻譯': 'translated', '其他': 'other' };
   function catHref(cat, sub) { return 'cat-' + CAT_SLUG[cat] + (sub ? '-' + SUB_SLUG[sub] : '') + '.html'; }
   function catName(cat, sub) { return sub ? sub + cat : cat; }
